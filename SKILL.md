@@ -7,7 +7,19 @@ metadata:
     bins: ["lark-cli"]
 ---
 
-# 法律条文导入与AI批注 (law-annotator)
+# 飞书法律工具箱 (feishu-lawtools)
+
+## 安装
+
+```bash
+# 通过 GitHub 安装
+pi install git:github.com/BluerAngala/feishu-lawtools
+
+# 或从 npm 安装（需先发布）
+# pi install npm:@bluerangala/feishu-lawtools
+```
+
+---
 
 把法律法规从URL或本地文件导入飞书在线文档，结构化呈现（章节→条款），并支持AI自动逐条添加批注解读。
 
