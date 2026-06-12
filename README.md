@@ -35,7 +35,7 @@
 | **pi** | `pi install` | `/law-import` 等 skill command | ✅ 原生支持 |
 | **Claude Code** | git clone → `~/.claude/skills/` | 直接描述需求给 AI | ✅ 适配 |
 | **Codex** | git clone → `~/.codex/skills/` | 直接描述需求给 AI | ✅ 适配 |
-| **Opencode** | git clone → `~/.codex/skills/` | 直接描述需求给 AI | ✅ 适配 |
+| **OpenCode / Grok 等** | git clone → `~/.agents/skills/` | 直接描述需求给 AI | ✅ 适配 |
 
 > 本 skill 遵循 [Agent Skills 标准](https://agentskills.io/specification)，任何兼容该标准的 agent 均可使用。核心操作依赖 `lark-cli` 命令行工具，只要有 bash 执行能力的 agent 都能驱动。
 
@@ -58,12 +58,23 @@ mkdir -p ~/.claude/skills
 git clone https://github.com/BluerAngala/feishu-lawtools ~/.claude/skills/feishu-lawtools
 ```
 
-### Codex / Opencode
+### Codex
 
 ```bash
 mkdir -p ~/.codex/skills
 git clone https://github.com/BluerAngala/feishu-lawtools ~/.codex/skills/feishu-lawtools
 ```
+
+> 也可在 Codex 中通过 `$skill-installer` 或 `AGENTS.md` 引用安装。
+
+### 其他 Agent（OpenCode、Grok 等）
+
+```bash
+mkdir -p ~/.agents/skills
+git clone https://github.com/BluerAngala/feishu-lawtools ~/.agents/skills/feishu-lawtools
+```
+
+> 或参考你的 agent 的文档，将本 skill 目录添加到对应的配置路径中。
 
 ### 手动（通用）
 
