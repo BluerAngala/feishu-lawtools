@@ -47,11 +47,11 @@ pi install git:github.com/BluerAngala/feishu-lawtools
 
 | 场景 | 调用 skill |
 |------|-----------|
-| URL 提取正文 | [`baoyu-url-to-markdown`](../../../.agents/skills/baoyu-url-to-markdown/SKILL.md) 或 [`defuddle`](../../../.pi/agent/skills/defuddle/SKILL.md) |
+| URL 提取正文 | `baoyu-url-to-markdown` 或 `defuddle`（pi 内置 skill） |
 | 本地文件读取 | `read` 工具直接读取 |
-| 飞书文档创建/读取 | [`lark-doc`](../../../.pi/agent/skills/lark-doc/SKILL.md) |
-| 飞书文档批注 | [`lark-drive`](../../../.pi/agent/skills/lark-drive/SKILL.md)（+add-comment） |
-| 认证/权限 | [`lark-shared`](../../../.pi/agent/skills/lark-shared/SKILL.md) |
+| 飞书文档创建/读取 | `lark-doc`（pi 内置 skill） |
+| 飞书文档批注 | `lark-drive`（pi 内置 skill，`+add-comment`） |
+| 认证/权限 | `lark-shared`（pi 内置 skill） |
 
 ## 命令
 
