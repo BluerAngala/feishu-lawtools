@@ -1,6 +1,6 @@
 {
   "name": "@bluerangala/feishu-lawtools",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "飞书法律工具箱 — 导入法律法规、AI划重点、AI批注解读（基于lark-cli）",
   "keywords": [
     "pi-package",
@@ -24,7 +24,9 @@
   },
   "homepage": "https://github.com/BluerAngala/feishu-lawtools#readme",
   "pi": {
-    "skills": ["./SKILL.md"]
+    "skills": [
+      "./SKILL.md"
+    ]
   },
   "files": [
     "SKILL.md",
