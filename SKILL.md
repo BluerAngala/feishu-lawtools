@@ -2,21 +2,49 @@
 name: feishu-lawtools
 version: 1.0.0
 description: "飞书法律工具箱。法律条文导入飞书在线文档、AI划重点标记、AI批注解读。触发方式：/law-import、/law-highlight、/law-annotate、/法律导入、/划重点、/法律批注"
+compatibility: "pi, Claude Code, Codex, Opencode - 任何能执行 bash 命令和调用 lark-cli 的 AI agent"
 metadata:
   requires:
     bins: ["lark-cli"]
+  cross-agent: true
 ---
 
 # 飞书法律工具箱 (feishu-lawtools)
 
 ## 安装
 
+### pi (推荐)
+
 ```bash
-# 通过 GitHub 安装
+# 从 GitHub 安装
 pi install git:github.com/BluerAngala/feishu-lawtools
 
-# 或从 npm 安装（需先发布）
-# pi install npm:@bluerangala/feishu-lawtools
+# 或从 npm 安装
+pi install npm:@bluerangala/feishu-lawtools
+```
+
+### Claude Code
+
+```bash
+# 克隆到 Claude Code 的 skills 目录
+mkdir -p ~/.claude/skills
+git clone https://github.com/BluerAngala/feishu-lawtools ~/.claude/skills/feishu-lawtools
+```
+
+### Codex / Opencode
+
+```bash
+# 克隆到 Codex 的 skills 目录
+mkdir -p ~/.codex/skills
+git clone https://github.com/BluerAngala/feishu-lawtools ~/.codex/skills/feishu-lawtools
+```
+
+### 手动（通用）
+
+```bash
+git clone https://github.com/BluerAngala/feishu-lawtools.git
+cd feishu-lawtools
+# 然后在你的 agent 配置中指向这个目录
 ```
 
 ---
@@ -52,6 +80,28 @@ pi install git:github.com/BluerAngala/feishu-lawtools
 | 飞书文档创建/读取 | `lark-doc`（pi 内置 skill） |
 | 飞书文档批注 | `lark-drive`（pi 内置 skill，`+add-comment`） |
 | 认证/权限 | `lark-shared`（pi 内置 skill） |
+
+## 使用方式
+
+### pi agent
+
+在 pi 中直接使用以下命令（pi 的 skill command 机制）：
+
+```
+/law-import <url|file_path> [--title "自定义标题"]
+/law-highlight <doc_url> <term> [--style highlight|bold]
+/law-annotate <doc_url> [--scope "article-1,article-5"] [--style 通俗|专业|案例]
+```
+
+### 其他 AI agent（Claude Code / Codex / Opencode）
+
+非 pi agent 不支持 `/command` 的 skill command 格式。请直接向 AI 描述你的需求，它会根据本 SKILL.md 的指令自动执行：
+
+> "把这个法律导入飞书文档" → 对应 `/law-import` 的功能
+> "给文档里的 '故意犯罪' 划重点" → 对应 `/law-highlight` 的功能
+> "给这个法律逐条加 AI 批注" → 对应 `/law-annotate` 的功能
+
+AI agent 会根据本 skill 中的步骤说明自动调用 `lark-cli` 完成操作。
 
 ## 命令
 

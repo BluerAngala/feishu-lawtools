@@ -2,10 +2,18 @@
 
 飞书法律工具箱 — 基于 **飞书（Lark）OpenAPI** 和 **lark-cli** 的命令集，由 AI agent 驱动，实现法律条文的导入、划重点、批注解读全流程。
 
+<p align="center">
+  <strong>pi</strong> · <strong>Claude Code</strong> · <strong>Codex</strong> · <strong>Opencode</strong>
+  <br>
+  <span>兼容所有主流 AI coding agent</span>
+</p>
+
 ---
 
 ## 目录
 
+- [兼容性矩阵](#兼容性矩阵)
+- [安装](#安装)
 - [依赖与前提](#依赖与前提)
 - [快速开始](#快速开始)
 - [命令详解](#命令详解)
@@ -17,6 +25,53 @@
 - [技术架构](#技术架构)
 - [开发指南](#开发指南)
 - [常见问题](#常见问题)
+
+---
+
+## 兼容性矩阵
+
+| Agent | 安装方式 | 触发方式 | 状态 |
+|-------|----------|----------|------|
+| **pi** | `pi install` | `/law-import` 等 skill command | ✅ 原生支持 |
+| **Claude Code** | git clone → `~/.claude/skills/` | 直接描述需求给 AI | ✅ 适配 |
+| **Codex** | git clone → `~/.codex/skills/` | 直接描述需求给 AI | ✅ 适配 |
+| **Opencode** | git clone → `~/.codex/skills/` | 直接描述需求给 AI | ✅ 适配 |
+
+> 本 skill 遵循 [Agent Skills 标准](https://agentskills.io/specification)，任何兼容该标准的 agent 均可使用。核心操作依赖 `lark-cli` 命令行工具，只要有 bash 执行能力的 agent 都能驱动。
+
+## 安装
+
+### pi
+
+```bash
+# 从 GitHub 安装（推荐）
+pi install git:github.com/BluerAngala/feishu-lawtools
+
+# 或从 npm 安装
+pi install npm:@bluerangala/feishu-lawtools
+```
+
+### Claude Code
+
+```bash
+mkdir -p ~/.claude/skills
+git clone https://github.com/BluerAngala/feishu-lawtools ~/.claude/skills/feishu-lawtools
+```
+
+### Codex / Opencode
+
+```bash
+mkdir -p ~/.codex/skills
+git clone https://github.com/BluerAngala/feishu-lawtools ~/.codex/skills/feishu-lawtools
+```
+
+### 手动（通用）
+
+```bash
+git clone https://github.com/BluerAngala/feishu-lawtools.git
+cd feishu-lawtools
+# 在你的 agent 配置中指向这个目录
+```
 
 ---
 
