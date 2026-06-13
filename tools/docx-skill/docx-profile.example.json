@@ -1,0 +1,10 @@
+{
+  "_note": "docx-skill 用户配置。首次使用：cp docx-profile.example.json docx-profile.json",
+  "author": {
+    "default": "AI 审查助手",
+    "initials": "AI"
+  },
+  "output": {
+    "suffix": "-revised"
+  }
+}
