@@ -7,8 +7,5 @@
   ],
   "token_url": "",
   "appid": "你的微信公众号 AppID",
-  "secret": "你的微信公众号 AppSecret",
-  "author": "作者名",
-  "cover_image": "https://example.com/cover.jpg",
-  "digest": ""
+  "secret": "你的微信公众号 AppSecret"
 }
