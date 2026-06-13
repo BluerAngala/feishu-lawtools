@@ -78,6 +78,14 @@ lark-cli docs +create --api-version v2 \
 
 返回文档 URL，格式如：`https://lawyerch.feishu.cn/docx/{document_id}`
 
+### ⑥ 验证
+
+```bash
+# 拉取文档内容，确认结构与条文 ID 正确
+lark-cli docs +fetch --api-version v2 --doc <token> --as user --format json \
+  | python3 -c "import sys,json; d=json.load(sys.stdin)['data']['document']['content']; print('OK' if 'id=\"article-' in d else 'MISSING article ids')"
+```
+
 ---
 
 ## 示例

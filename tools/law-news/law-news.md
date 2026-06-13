@@ -20,10 +20,10 @@ scripts: [scripts/law-news.sh]
 
 ```bash
 # ① 获取新闻列表（输出 JSON）
-law-news/scripts/law-news.sh fetch cctv-law --days 3 --max 10 > /tmp/news.json
+tools/law-news/scripts/law-news.sh fetch cctv-law --days 3 --max 10 > /tmp/news.json
 
 # ② 发布 markdown → 飞书文档
-law-news/scripts/law-news.sh publish article.md --title "法律资讯简报 2026-06-13" [--wiki <space_id>]
+tools/law-news/scripts/law-news.sh publish article.md --title "法律资讯简报 2026-06-13" [--wiki <space_id>]
 ```
 
 ## AI 负责的部分
@@ -55,7 +55,7 @@ law-news/scripts/law-news.sh publish article.md --title "法律资讯简报 2026
 |------|------|-----|
 | `cctv-law` | 央视网法治新闻 | 脚本内封装 |
 
-扩展新源：在 `law-news/scripts/law-news.sh` 的 `fetch_*()` 函数中添加即可。
+扩展新源：在 `tools/law-news/scripts/law-news.sh` 的 `fetch_*()` 函数中添加即可。
 
 ## 示例
 

@@ -29,7 +29,10 @@
     ]
   },
   "files": [
+    "AGENTS.md",
+    "README.md",
     "SKILL.md",
-    "README.md"
+    "lib/",
+    "tools/"
   ]
 }

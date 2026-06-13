@@ -6,8 +6,8 @@
 
 - 这是一个 **Agent Skills 标准** 包（不是常规应用）。Agent 通过读取 `SKILL.md` + `tools/*.md` 获取操作指令。
 - 入口：`SKILL.md`（元信息、前置检查、流程图、工具索引）
-- 子工具：`law-import/law-import.md`、`law-news/law-news.md`、`law-highlight/law-highlight.md`、`law-annotate/law-annotate.md`
-- 机械操作脚本：`law-news/scripts/law-news.sh`（curl/解析/飞书 API），降低 token 消耗
+- 子工具：`tools/law-import/law-import.md`、`tools/law-news/law-news.md`、`tools/law-highlight/law-highlight.md`、`tools/law-annotate/law-annotate.md`
+- 机械操作脚本：`tools/law-news/scripts/law-news.sh`（curl/解析/飞书 API），降低 token 消耗
 - 无 `package.json` scripts，无 CI，无 linter，无 typecheck
 
 ## 前置检查（每次操作前必做）

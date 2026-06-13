@@ -14,10 +14,10 @@ metadata:
     transform: 格式转换
     ai: AI 内容生成
   tools:
-    - law-import/law-import.md
-    - law-news/law-news.md
-    - law-highlight/law-highlight.md
-    - law-annotate/law-annotate.md
+    - tools/law-import/law-import.md
+    - tools/law-news/law-news.md
+    - tools/law-highlight/law-highlight.md
+    - tools/law-annotate/law-annotate.md
 ---
 
 # 飞书法律工具箱 (feishu-lawtools)
@@ -173,10 +173,10 @@ AI agent 会根据对应工具文件的步骤说明自动调用 `lark-cli` 完�
 
 | 工具 | 分类 | 文件 | 功能 |
 |------|------|------|------|
-| `/law-import` | import/transform | [`law-import/law-import.md`](law-import/law-import.md) | 导入法律条文，创建飞书文档 |
-| `/law-news` | fetch/transform | [`law-news/law-news.md`](law-news/law-news.md) | 获取法律资讯，整理为文章 |
-| `/law-highlight` | annotate/transform | [`law-highlight/law-highlight.md`](law-highlight/law-highlight.md) | 正文内标记（高亮/加粗/标色） |
-| `/law-annotate` | annotate/ai | [`law-annotate/law-annotate.md`](law-annotate/law-annotate.md) | AI 逐条生成批注解读 |
+| `/law-import` | import/transform | [`tools/law-import/law-import.md`](tools/law-import/law-import.md) | 导入法律条文，创建飞书文档 |
+| `/law-news` | fetch/transform | [`tools/law-news/law-news.md`](tools/law-news/law-news.md) | 获取法律资讯，整理为文章 |
+| `/law-highlight` | annotate/transform | [`tools/law-highlight/law-highlight.md`](tools/law-highlight/law-highlight.md) | 正文内标记（高亮/加粗/标色） |
+| `/law-annotate` | annotate/ai | [`tools/law-annotate/law-annotate.md`](tools/law-annotate/law-annotate.md) | AI 逐条生成批注解读 |
 
 ## 注意事项
 

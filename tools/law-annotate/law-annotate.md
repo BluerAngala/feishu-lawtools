@@ -111,6 +111,14 @@ lark-cli drive +add-comment \
 
 如果文档较长（>50条），应分批获取 block_id 和分批添加批注，避免超时。每次添加批注后等待 1-2 秒（API 有频率限制）。
 
+### 验证
+
+```bash
+# 查询文档批注列表，确认已添加
+lark-cli api GET /open-apis/drive/v1/files/{doc_token}/comments --as user \
+  | python3 -c "import sys,json; items=json.load(sys.stdin).get('data',{}).get('items',[]); print(f'OK: {len(items)} comments')"
+```
+
 ---
 
 ## 示例

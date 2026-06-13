@@ -219,26 +219,28 @@ https://lawyerch.feishu.cn/docx/xxx#doxcn123456
 ```
 feishu-lawtools/
 ├── SKILL.md                     ← 总调度：元信息、前置检查、流程图、工具索引
+├── AGENTS.md                    ← agent 操作指南
 ├── README.md                    ← 本文件（人类可读的说明文档）
 ├── package.json                 ← npm 包信息
-├── AGENTS.md                    ← agent 操作指南
-├── law-import/
-│   └── law-import.md            ← /law-import 命令详解
-├── law-news/
-│   ├── law-news.md              ← /law-news 命令详解
-│   └── scripts/
-│       └── law-news.sh          ← 机械操作脚本，降低 token 消耗
-├── law-highlight/
-│   └── law-highlight.md         ← /law-highlight 命令详解
-└── law-annotate/
-    └── law-annotate.md          ← /law-annotate 命令详解
+├── lib/                         ← 共享脚本库
+└── tools/                       ← 所有 skill 目录
+    ├── law-import/
+    │   └── law-import.md
+    ├── law-news/
+    │   ├── law-news.md
+    │   └── scripts/
+    │       └── law-news.sh      ← 机械操作脚本，降低 token 消耗
+    ├── law-highlight/
+    │   └── law-highlight.md
+    └── law-annotate/
+        └── law-annotate.md
 ```
 
 ### 结构规则
 
-- **每个 skill 独立目录**：`law-<name>/` 下辖说明文档 + 可选 `scripts/`
-- **脚本归所属 skill**：`scripts/` 在 skill 目录内，避免误以为是全局工具
-- **纯指令 skill 无需脚本**：无机械操作时，只放 `.md` 即可
+- **所有 skill 收在 `tools/` 下**：根目录只放顶层配置，加再多 skill 也不乱
+- **每个 skill 独立目录**：`tools/law-<name>/` 下辖说明文档 + 可选 `scripts/`
+- **共享逻辑放 `lib/`**：多个 skill 共用的函数抽到 `lib/<name>.sh`
 
 ---
 

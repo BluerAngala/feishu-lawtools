@@ -106,6 +106,18 @@ lark-cli docs +update --api-version v2 \
 > - `--revision-id -1` 表示使用最新版本
 > - 标记操作不可逆，建议先备份或用批注方式标记不确定的内容
 
+### 验证
+
+```bash
+# 对加粗操作：拉取文档全文，确认 <b> 标签已插入
+lark-cli docs +fetch --api-version v2 --doc <token> --as user --format json \
+  | python3 -c "import sys,json; c=json.load(sys.stdin)['data']['document']['content']; print('OK' if '<b>' in c else 'NO bold found')"
+
+# 对高亮操作：查询目标 block，确认 background_color 已设置
+lark-cli api GET /open-apis/docx/v1/documents/{doc_id}/blocks/{block_id} --as user \
+  | python3 -c "import sys,json; e=json.load(sys.stdin).get('data',{}).get('block',{}).get('text',{}).get('elements',[]); print('OK' if any(x.get('text_element_style',{}).get('background_color') for x in e) else 'NO highlight')"
+```
+
 ---
 
 ## 示例
