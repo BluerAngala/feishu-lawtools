@@ -12,10 +12,10 @@ scripts: [scripts/docx.mjs]
 
 ## 为什么需要
 
-Word 把 `2025年8月8日` 这种短文本经常切成 **13 个 `<w:r>` run**，常见 docx 库直接 `keyword.indexOf` 会大量漏命中。本工具用「虚拟文本流 + runMap」做跨 run 安全切片：
+Word 把 `2026年7月1日` 这种短文本经常切成 **13 个 `<w:r>` run**，常见 docx 库直接 `keyword.indexOf` 会大量漏命中。本工具用「虚拟文本流 + runMap」做跨 run 安全切片：
 
-- 旧方案在真实合同上：3 个修订关键词，命中 1 个（33%）
-- 本工具：5 个跨 run 关键词，全部命中（100%）
+- 旧方案：关键词跨 run 时大量漏命中
+- 本工具：跨 run 关键词也可 100% 命中
 
 ## 首次使用
 
@@ -26,8 +26,10 @@ node --version
 # 2. 查看所有命令
 ./docx help
 
-# 3. 测试一把
-./docx inspect 合同.docx
+# 3. 用示例 ops 体验完整流程
+./docx inspect document.docx
+./docx apply document.docx examples/demo-ops.json --dry-run
+./docx apply document.docx examples/demo-ops.json -o document-revised.docx
 ```
 
 ## AI 标准操作流程
@@ -37,26 +39,26 @@ node --version
 ### 第一步：让 AI 看清文档
 
 ```bash
-node scripts/docx.mjs ai-context 合同.docx
-node scripts/docx.mjs outline 合同.docx
-node scripts/docx.mjs dump 合同.docx --md
-node scripts/docx.mjs find 合同.docx "金额" -c 30
+node scripts/docx.mjs ai-context document.docx
+node scripts/docx.mjs outline document.docx
+node scripts/docx.mjs dump document.docx --md
+node scripts/docx.mjs find document.docx "关键词" -c 30
 ```
 
 ### 第二步：AI 写 ops.json
 
-参照 `ai-context` 输出，用稳定段 ID + keyword/regex 定位。
+参照 `ai-context` 输出，用稳定段 ID + keyword/regex 定位。可参考 `examples/demo-ops.json` 的格式。
 
 ### 第三步：dry-run 看命中报告
 
 ```bash
-node scripts/docx.mjs apply 合同.docx ops.json --dry-run
+node scripts/docx.mjs apply document.docx ops.json --dry-run
 ```
 
 ### 第四步：确认无误后落盘
 
 ```bash
-node scripts/docx.mjs apply 合同.docx ops.json -o 合同-修订版.docx --author "AI 审查助手"
+node scripts/docx.mjs apply document.docx ops.json -o document-revised.docx --author "AI Editor"
 ```
 
 ## CLI 命令
@@ -79,21 +81,22 @@ node scripts/docx.mjs <command> [args]
 
 ```json
 {
-  "meta": { "author": "AI 审查助手", "date": "2026-06-13T10:00:00Z" },
+  "meta": { "author": "AI Editor", "date": "2026-06-13T10:00:00Z" },
   "ops": [
-    { "type": "header.set", "value": "SWXCBHT-2026-045" },
-    { "type": "comment.add",    "locate": { "keyword": "示例律师事务所" }, "text": "请确认甲方主体" },
-    { "type": "comment.add",    "locate": { "paragraph": "P0020", "keyword": "壹拾陆万伍仟元整" }, "text": "中文大写需校对" },
-    { "type": "revise.replace", "locate": { "keyword": "2025年8月8日" }, "to": "2025年08月08日" },
-    { "type": "revise.replace", "locate": { "keyword": "千分之三" }, "to": "千分之五" },
-    { "type": "revise.insert",  "locate": { "paragraph": "P0001", "keyword": "项目委托合同" }, "text": "（修订版）", "mode": "after" },
-    { "type": "revise.delete",  "locate": { "keyword": "本合同一式伍份" } },
-    { "type": "replace",        "locate": { "regex": "¥\\s*165000" }, "to": "¥ 165,000.00" },
-    { "type": "insert",         "locate": { "paragraph": "P0073", "keyword": "费用明细" }, "text": "（见附件一）", "mode": "after" },
-    { "type": "delete",         "locate": { "paragraph": "P0079", "keyword": "日期：   年   月   日" } }
+    { "type": "header.set",      "value": "DRAFT-v2.3", "headerType": "default" },
+    { "type": "comment.add",     "locate": { "keyword": "项目方案" }, "text": "建议补充具体实施时间表" },
+    { "type": "comment.add",     "locate": { "paragraph": "P0020", "keyword": "2024年1月1日" }, "text": "日期已过时，请核实" },
+    { "type": "revise.replace",  "locate": { "keyword": "2024年1月1日" }, "to": "2026年7月1日" },
+    { "type": "revise.insert",   "locate": { "paragraph": "P0001", "keyword": "会议纪要" }, "text": "（修订版）", "mode": "after" },
+    { "type": "revise.delete",   "locate": { "keyword": "待补充" } },
+    { "type": "replace",         "locate": { "regex": "预算.*?\\d+" }, "to": "预算：¥50,000" },
+    { "type": "insert",          "locate": { "paragraph": "P0010", "keyword": "费用明细" }, "text": "（详见附件一）", "mode": "after" },
+    { "type": "delete",          "locate": { "paragraph": "P0012", "keyword": "旧版说明" } }
   ]
 }
 ```
+
+完整示例见 `examples/demo-ops.json`（涵盖全部 op 类型）。其他场景示例见 `examples/scenario-*.json`。
 
 ### op 类型
 
@@ -123,36 +126,50 @@ node scripts/docx.mjs <command> [args]
 ```js
 import { apply, formatReport, aiContext, find } from './scripts/index.mjs';
 
-const ctx = await aiContext('contract.docx');
+const ctx = await aiContext('document.docx');
 const ops = [
-  { type: 'header.set', value: 'NUM-001' },
-  { type: 'comment.add', locate: { keyword: '甲方' }, text: '请核对主体' },
-  { type: 'revise.replace', locate: { keyword: '千分之三' }, to: '千分之五' },
+  { type: 'header.set', value: 'DRAFT-v2' },
+  { type: 'comment.add', locate: { keyword: '方案概述' }, text: '建议补充量化指标' },
+  { type: 'revise.replace', locate: { keyword: '旧版数据' }, to: '新版数据' },
 ];
 
 // dry-run
-const { report } = await apply('contract.docx', ops, { dryRun: true });
+const { report } = await apply('document.docx', ops, { dryRun: true });
 console.error(formatReport(report));
 
 // 落盘
-await apply('contract.docx', ops, { outPath: 'out.docx', author: 'AI' });
+await apply('document.docx', ops, { outPath: 'out.docx', author: 'AI Editor' });
 ```
 
 ## 跨 run 命中能力
 
+Word 经常把看似连续的文本切成多个 `<w:r>` run，本工具通过「虚拟文本流」安全匹配：
+
 | 实际段落原文 | Word 实际拆成 | 旧 keyword.indexOf | 本工具 |
 |---|---|---|---|
-| `2025年8月8日至2025年8月10日。` | 13 个 run（每字一片） | 漏 | ✓ |
-| `…合同总额千分之三作为违约金…` | `千` / `分之三作为…` 跨 2 run | 漏 | ✓ |
-| `本合同一式伍份…执贰份…` | `本合同一式伍份…` / `贰` / `份…` 跨 3 run | 半命中 | ✓ |
+| `2026年7月1日至2026年7月31日` | 13 个 run（每字一片） | 漏 | ✓ |
+| `总预算¥50,000其中包括…` | `总预算¥` / `50,000` / `其中` 跨 3 run | 漏 | ✓ |
+| `数据收集与分析报告` | `数据收集` / `与` / `分析报告` 跨 3 run | 半命中 | ✓ |
 
 ## 冲突检测
 
 dry-run 会自动检测同段重叠 edit，输出：
 
 ```
-[ERR] op[__commit__] __commit__  paragraph edit conflict: paragraph P0020 has conflicting edits [36,36) vs [34,42)
+[ERR] op[__commit__] __commit__  paragraph edit conflict:
+       paragraph P0020 has conflicting edits [36,36) vs [34,42)
 ```
+
+## 场景示例
+
+`examples/` 目录下提供多个场景的 ops.json 参考：
+
+| 文件 | 场景 | 涵盖操作 |
+|------|------|----------|
+| `demo-ops.json` | 通用演示（推荐新手入门） | 全部 8 种 op 类型 |
+| `scenario-contract-review.json` | 合同审查 | comment + revise |
+
+AI 可根据文档内容自由组合，不限于上述场景。
 
 ## 目录结构
 
@@ -160,6 +177,9 @@ dry-run 会自动检测同段重叠 edit，输出：
 docx-skill/                         ← 自包含 skill 包，零 npm 依赖
 ├── docx-skill.md                   ← skill 文档（本文件）
 ├── docx                            ← 入口脚本（`./docx <command>`）
+├── examples/
+│   ├── demo-ops.json               ← 通用示例（推荐入门用）
+│   └── scenario-contract-review.json  ← 合同审查场景示例
 ├── scripts/
 │   ├── docx.mjs                    ← CLI 入口
 │   ├── index.mjs                   ← Node API 入口

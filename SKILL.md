@@ -84,7 +84,7 @@ cd feishu-lawtools
 | `law-highlight` | `lark-cli` | — | AI 指令 | 正文标记 |
 | `law-annotate` | `lark-cli` | — | AI 指令 | AI 批注 |
 | `→ 公众号` | `lark-cli`, `node` | — | 调用 `tools/md-to-wechat` CLI | Markdown/飞书文档 → 公众号 HTML |
-| `docx-skill` | `node` | `docx-profile.json`（可选） | Node.js 脚本 | docx 文档审查/修订（跨 run 匹配、批注、留痕） |
+| `docx-skill` | `node` | `docx-profile.json`（可选） | Node.js 脚本 | docx 文档审阅/修订（跨 run 匹配、批注、留痕）——通用，不限于特定领域 |
 | `wechat-draft` | `python3`, `requests` | — | Python 脚本 | HTML → 微信公众号草稿 |
 
 > 公众号转换能力由 `tools/md-to-wechat/` 提供（18 主题的 Node.js 转换器，`scripts/cli.js`），非独立工具，各 skill 可直接调用。
@@ -215,7 +215,7 @@ AI agent 会根据对应工具文件的步骤说明自动调用 `lark-cli` 完�
 | `/law-news` | fetch/transform | [`tools/law-news/law-news.md`](tools/law-news/law-news.md) | 获取法律资讯，整理为文章 |
 | `/law-highlight` | annotate/transform | [`tools/law-highlight/law-highlight.md`](tools/law-highlight/law-highlight.md) | 正文内标记（高亮/加粗/标色） |
 | `/law-annotate` | annotate/ai | [`tools/law-annotate/law-annotate.md`](tools/law-annotate/law-annotate.md) | AI 逐条生成批注解读 |
-| `docx-skill` | transform/annotate | [`tools/docx-skill/docx-skill.md`](tools/docx-skill/docx-skill.md) | docx 文档审查/修订（跨 run 匹配、批注、留痕修订） |
+| `docx-skill` | transform/annotate | [`tools/docx-skill/docx-skill.md`](tools/docx-skill/docx-skill.md) | docx 文档审阅/修订（通用，不限领域） |
 
 ## 注意事项
 
