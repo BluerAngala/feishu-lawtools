@@ -28,8 +28,55 @@ import datetime
 import html as htmlmod
 import urllib.request
 import subprocess
+import importlib
+import importlib.util
 
-CCTVP_API = "https://news.cctv.com/2019/07/gaiban/cmsdatainterface/page/law_1.jsonp?cb=law"
+
+# ===== 信息源自动发现 =====
+# 每个信息源是一个独立的 .py 文件放在 scripts/sources/ 下
+# 只需暴露 ID / NAME / fetch_list() / fetch_article() 四个接口即可自动注册
+
+_SOURCES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sources')
+_SOURCES_CACHE = None
+
+
+def discover_sources():
+    """扫描 sources/ 目录，发现所有信息源模块"""
+    global _SOURCES_CACHE
+    if _SOURCES_CACHE is not None:
+        return _SOURCES_CACHE
+
+    result = {}
+    if not os.path.isdir(_SOURCES_DIR):
+        _SOURCES_CACHE = result
+        return result
+
+    for fname in sorted(os.listdir(_SOURCES_DIR)):
+        if not fname.endswith('.py') or fname == '__init__.py':
+            continue
+        mod_name = fname[:-3]
+        try:
+            spec = importlib.util.spec_from_file_location(
+                f'law_news.sources.{mod_name}',
+                os.path.join(_SOURCES_DIR, fname)
+            )
+            mod = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(mod)
+
+            src_id = getattr(mod, 'ID', mod_name)
+            result[src_id] = {
+                'name': getattr(mod, 'NAME', src_id),
+                'module': mod,
+            }
+        except Exception as e:
+            print(f"⚠️  加载信息源 {fname} 失败: {e}", file=sys.stderr)
+
+    _SOURCES_CACHE = result
+    return result
+
+
+SOURCES = discover_sources()
+
 
 
 # ===== helpers =====
@@ -45,10 +92,6 @@ def get_cache_dir():
 def ensure_dirs(*paths):
     for p in paths:
         os.makedirs(p, exist_ok=True)
-
-def article_id_from_url(url):
-    m = re.search(r'/(ARTI[a-zA-Z0-9_-]+)\.', url)
-    return m.group(1) if m else None
 
 def today():
     return datetime.date.today().isoformat()
@@ -159,177 +202,25 @@ def calculate_scale(url, target_w=600):
 
 # ===== fetch: 资讯列表 → 索引文档 .md =====
 
-def fetch_cctv(days=3, max_items=10):
-    url = CCTVP_API
-    req = urllib.request.Request(url, headers={'X-Requested-With': 'XMLHttpRequest'})
-
-    try:
-        resp = urllib.request.urlopen(req).read().decode('utf-8')
-    except Exception as e:
-        die(f"fetch failed: {e}")
-
-    # Strip JSONP wrapper: law(...)
-    resp = resp.strip()
-    if resp.startswith('law('):
-        resp = resp[4:]
-    if resp.endswith(')'):
-        resp = resp[:-1]
-
-    data = json.loads(resp)
-    items = data['data']['list']
-
-    cutoff = datetime.datetime.now() - datetime.timedelta(days=days)
-    out = []
-    for i in items:
-        d = datetime.datetime.strptime(i['focus_date'][:10], '%Y-%m-%d')
-        if d < cutoff:
-            continue
-        out.append({
-            'title': i['title'],
-            'date': i['focus_date'],
-            'url': i['url'],
-            'brief': i['brief'],
-            'image': i.get('image', '') or '',
-            'image2': i.get('image2', '') or '',
-            'image3': i.get('image3', '') or '',
-            'keywords': i['keywords'].split()
-        })
-        if len(out) >= max_items:
-            break
-
-    result = {'source': 'cctv-law', 'count': len(out), 'items': out}
-    cache_dir = get_cache_dir()
-
-    # Save raw JSON
-    raw_dir = os.path.join(cache_dir, 'raw', 'cctv-law')
-    ensure_dirs(raw_dir)
-    raw_file = os.path.join(raw_dir, f"{today()}.json")
-    with open(raw_file, 'w', encoding='utf-8') as f:
-        json.dump(result, f, ensure_ascii=False)
-
-    # Generate markdown index
-    exports_dir = os.path.join(cache_dir, 'exports')
-    ensure_dirs(exports_dir)
-    md_file = os.path.join(exports_dir, f"{today()}_cctv-law_索引.md")
-
-    ts = now_ts()
-    lines = [
-        '# 央视网法治新闻 · 资讯列表',
-        '',
-        f'获取时间: {ts}',
-        f'> 共 {len(out)} 条 | 原始数据: {raw_file}',
-        '',
-    ]
-    for idx, i in enumerate(out, 1):
-        brief = (i['brief'][:200] + '…') if len(i['brief']) > 200 else i['brief']
-        lines.extend([
-            f'## {idx}. {i["title"]}',
-            '',
-            f'- **日期**: {i["date"]}',
-            f'- **摘要**: {brief}',
-            f'- **关键词**: {"、".join(i["keywords"])}',
-            f'- **原文**: {i["url"]}',
-            '',
-        ])
-
-    with open(md_file, 'w', encoding='utf-8') as f:
-        f.write('\n'.join(lines))
-
-    return md_file
 
 
 # ===== fetch-article: 单篇全文 → 文章 .md =====
 
-def fetch_article_content(url):
-    """从央视网文章页提取全文"""
-    try:
-        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-        html = urllib.request.urlopen(req).read().decode('utf-8', errors='replace')
-    except Exception as e:
-        die(f"fetch-article failed: {e}")
-
-    # Extract title
-    title_m = re.search(r'<title>(.*?)</title>', html)
-    title = title_m.group(1) if title_m else ''
-    title = re.sub(r'\s*[_-]\s*(央视网|新闻频道).*$', '', title).strip()
-
-    # Extract date: try page, fallback to URL
-    date = ''
-    date_m = re.search(r'(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})', html)
-    if date_m:
-        date = date_m.group(1)
-    if not date:
-        date_m = re.search(r'/(\d{4})/(\d{2})/(\d{2})/', url)
-        if date_m:
-            date = f'{date_m.group(1)}-{date_m.group(2)}-{date_m.group(3)}'
-
-    # Extract contentdate from embedded JS
-    idx = html.find('var contentdate')
-    content = ''
-    content_html = ''
-
-    if idx >= 0:
-        # Find the string literal (single or double quoted)
-        start_char = None
-        start_idx = -1
-        for c in ("'", '"'):
-            qi = html.find(c, idx + 16)
-            if qi > 0:
-                start_char = c
-                start_idx = qi + 1
-                break
-
-        if start_char:
-            # Find matching end (handling escape sequences)
-            end = start_idx
-            escaped = False
-            while end < len(html):
-                ch = html[end]
-                if escaped:
-                    escaped = False
-                elif ch == '\\':
-                    escaped = True
-                elif ch == start_char:
-                    break
-                end += 1
-
-            raw_html = html[start_idx:end]
-            # Unescape JS string
-            raw_html = raw_html.replace('\\n', '\n').replace('\\/', '/').replace('\\"', '"').replace("\\'", "'")
-            content_html = raw_html
-
-            # Strip HTML tags
-            text = re.sub(r'<script[^>]*>.*?</script>', '', raw_html, flags=re.DOTALL)
-            text = re.sub(r'<style[^>]*>.*?</style>', '', text, flags=re.DOTALL)
-            text = re.sub(r'<[^>]+>', '', text)
-            # HTML entities
-            text = text.replace('&ldquo;', '\u201c').replace('&rdquo;', '\u201d')
-            text = text.replace('&nbsp;', ' ').replace('&mdash;', '\u2014').replace('&hellip;', '\u2026')
-            text = text.replace('&quot;', '"').replace('&lt;', '<').replace('&gt;', '>')
-            text = re.sub(r'&[a-z]+;', '', text)
-            # Normalize lines
-            lines = [l.strip() for l in text.split('\n') if l.strip()]
-            content = '\n\n'.join(lines)
-
-    # Extract images
-    source_html = content_html if content_html else html
-    imgs = re.findall(r'<img[^>]+src="([^"]+)"', source_html)
-    imgs = [img for img in imgs if img.startswith('http')]
-
-    return {
-        'title': title,
-        'url': url,
-        'date': date,
-        'content': content,
-        'content_html': content_html,
-        'images': imgs,
-        'keywords': [],
-        'cached_at': now_ts()
-    }
-
 
 def fetch_article_cmd(url):
-    article_id = article_id_from_url(url)
+    """Fetch single article, detect source from raw cache, cache JSON+MD"""
+    # Try to get article ID from each source module, fallback to hash
+    article_id = None
+    for src_info in SOURCES.values():
+        mod = src_info.get('module')
+        if mod and hasattr(mod, 'article_id_from_url'):
+            try:
+                aid = mod.article_id_from_url(url)
+                if aid:
+                    article_id = aid
+                    break
+            except Exception:
+                continue
     if not article_id:
         article_id = str(hash(url))[:16]
 
@@ -344,39 +235,60 @@ def fetch_article_cmd(url):
     if os.path.isfile(md_file) and os.path.isfile(json_file):
         return md_file
 
-    data = fetch_article_content(url)
+    # Try each source's fetch_article, use the first one that works
+    data = None
+    used_source = ''
+    for src_id, src_info in SOURCES.items():
+        mod = src_info.get('module')
+        if not mod or not hasattr(mod, 'fetch_article'):
+            continue
+        try:
+            data = mod.fetch_article(url)
+            if data and data.get('content', '').strip():
+                data['source'] = src_id
+                used_source = src_id
+                break
+        except Exception:
+            continue
 
-    # Look up metadata (image, keywords, brief) from cached raw data
-    raw_dir = os.path.join(get_cache_dir(), 'raw', 'cctv-law')
+    if data is None:
+        die(f"fetch-article failed: no source could parse {url}")
+
+    # Look up metadata (image, keywords, brief) from raw cache
+    raw_dir = os.path.join(get_cache_dir(), 'raw', used_source)
     if os.path.isdir(raw_dir):
         for fn in sorted(os.listdir(raw_dir), reverse=True):
-            if fn.endswith('.json'):
-                with open(os.path.join(raw_dir, fn), 'r') as f:
-                    raw_data = json.load(f)
-                for item in raw_data.get('items', []):
-                    if item.get('url', '').rstrip('/') == url.rstrip('/'):
-                        if not data.get('image'):
-                            data['image'] = item.get('image', '') or ''
-                        if not data.get('keywords'):
-                            data['keywords'] = item.get('keywords', [])
-                        if not data.get('brief'):
-                            data['brief'] = item.get('brief', '')
-                        break
+            if not fn.endswith('.json'):
+                continue
+            with open(os.path.join(raw_dir, fn), 'r') as f:
+                raw_data = json.load(f)
+            for item in raw_data.get('items', []):
+                if item.get('url', '').rstrip('/') == url.rstrip('/'):
+                    if not data.get('image'):
+                        data['image'] = item.get('image', '') or ''
+                    if not data.get('keywords'):
+                        data['keywords'] = item.get('keywords', [])
+                    if not data.get('brief'):
+                        data['brief'] = item.get('brief', '')
+                    break
             if data.get('image'):
                 break
+
     data.setdefault('image', '')
     data.setdefault('keywords', [])
     data.setdefault('brief', '')
+    data.setdefault('source', used_source)
 
     # Save JSON
     with open(json_file, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False)
 
     # Generate .md
+    src_name = SOURCES.get(used_source, {}).get('name', used_source)
     md_lines = [
         f'# {data["title"]}',
         '',
-        f'**来源**: 央视网 | {data["date"]} | [原文链接]({data["url"]})',
+        f'**来源**: {src_name} | {data["date"]} | [原文链接]({data["url"]})',
         '',
     ]
     if data.get('image'):
@@ -392,7 +304,6 @@ def fetch_article_cmd(url):
     return md_file
 
 
-# ===== compile: 多篇文章汇编 → 最终稿件 .md =====
 
 def compile_newsletter(articles_csv, style='简报', title=None, lawyer_comments=None, lawyer_profile=None):
     if not articles_csv:
@@ -470,7 +381,9 @@ def compile_newsletter(articles_csv, style='简报', title=None, lawyer_comments
             raw_date = data.get('date', '')
             date_text = raw_date[:10] if raw_date else ''
             content = data.get('content', '')
-            source_name = '央视网'
+            src_id = data.get('source', '')
+            src_info = SOURCES.get(src_id, {})
+            source_name = src_info.get('name', src_id or '未知来源')
 
             # Use original brief from fetch data (no truncation)
             summary = data.get('brief', '') or ''
@@ -478,18 +391,23 @@ def compile_newsletter(articles_csv, style='简报', title=None, lawyer_comments
             # Look up main image from raw cache
             image_url = data.get('image', '') or ''
             if not image_url:
-                raw_dir = os.path.join(cache_dir, 'raw', 'cctv-law')
-                if os.path.isdir(raw_dir):
-                    for fn in sorted(os.listdir(raw_dir), reverse=True):
-                        if fn.endswith('.json'):
+                src_id = data.get('source', '')
+                if src_id and src_id in SOURCES:
+                    raw_dir = os.path.join(cache_dir, 'raw', src_id)
+                    if os.path.isdir(raw_dir):
+                        target_url = data.get('url', '').rstrip('/')
+                        for fn in sorted(os.listdir(raw_dir), reverse=True):
+                            if not fn.endswith('.json'):
+                                continue
                             with open(os.path.join(raw_dir, fn), 'r') as f:
                                 raw_data = json.load(f)
                             for item in raw_data.get('items', []):
-                                if article_id_from_url(item.get('url', '')) == aid:
+                                if item.get('url', '').rstrip('/') == target_url:
                                     image_url = item.get('image', '') or ''
-                                    break
-                        if image_url:
-                            break
+                                    if image_url:
+                                        break
+                            if image_url:
+                                break
 
             lines.extend([
                 f'## [{idx}. {title_text}]({article_url})',
@@ -717,10 +635,60 @@ def main():
                 i += 2
             else:
                 i += 1
-        if source == 'cctv-law':
-            print(fetch_cctv(days, max_items))
-        else:
-            die(f"ERROR: unknown source: {source}")
+        src_info = SOURCES.get(source)
+        if src_info is None:
+            available = ', '.join(SOURCES.keys())
+            die(f"ERROR: unknown source '{source}'. 可用信息源: {available}")
+
+        mod = src_info.get('module')
+        if not mod or not hasattr(mod, 'fetch_list'):
+            die(f"ERROR: source '{source}' 未实现 fetch_list()")
+
+        # Fetch items from source module
+        items = mod.fetch_list(days=days, max_items=max_items)
+        name = src_info.get('name', source)
+
+        # Wrap result
+        result = {'source': source, 'count': len(items), 'items': items}
+        cache_dir = get_cache_dir()
+
+        # Save raw JSON
+        raw_dir = os.path.join(cache_dir, 'raw', source)
+        ensure_dirs(raw_dir)
+        raw_file = os.path.join(raw_dir, f"{today()}.json")
+        with open(raw_file, 'w', encoding='utf-8') as f:
+            json.dump(result, f, ensure_ascii=False)
+
+        # Generate markdown index
+        exports_dir = os.path.join(cache_dir, 'exports')
+        ensure_dirs(exports_dir)
+        md_file = os.path.join(exports_dir, f"{today()}_{source}_索引.md")
+
+        ts = now_ts()
+        lines = [
+            f'# {name} · 资讯列表',
+            '',
+            f'获取时间: {ts}',
+            f'> 共 {len(items)} 条 | 原始数据: {raw_file}',
+            '',
+        ]
+        for idx, i in enumerate(items, 1):
+            brief = (i['brief'][:200] + '…') if len(i.get('brief', '')) > 200 else i.get('brief', '')
+            keywords = '、'.join(i.get('keywords', []))
+            lines.extend([
+                f'## {idx}. {i["title"]}',
+                '',
+                f'- **日期**: {i.get("date", "")}',
+                f'- **摘要**: {brief}',
+                f'- **关键词**: {keywords}',
+                f'- **原文**: {i["url"]}',
+                '',
+            ])
+
+        with open(md_file, 'w', encoding='utf-8') as f:
+            f.write('\n'.join(lines))
+
+        print(md_file)
 
     elif cmd == 'fetch-article':
         if len(sys.argv) < 3:

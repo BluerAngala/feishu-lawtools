@@ -367,18 +367,57 @@ tools/law-news/scripts/law-news.py publish "$news_path" \
 
 ## 支持的信息源
 
-| 标识 | 名称 | API |
+| 标识 | 名称 | 文件 |
 |------|------|------|
-| `cctv-law` | 央视网法治新闻 | 脚本内封装 |
+| `cctv-law` | 央视网法治新闻 | `scripts/sources/cctv-law.py` |
 
-扩展新源：在 `scripts/law-news.py` 添加 `fetch_<name>()` 函数即可。
+每个信息源是一个独立的 Python 文件，放在 `scripts/sources/` 目录下，**自动发现注册**，无需修改主脚本。
 
-### 新源函数约定
+### 源脚本接口约定
+
+在 `scripts/sources/` 下创建 `<标识>.py`，必须暴露以下接口：
 
 ```python
-def fetch_mysource(days: int, max_items: int) -> dict:
-    """返回字典，格式同 fetch JSON 字段表"""
+# 必填：信息源标识和显示名
+ID = 'mysource'
+NAME = '我的信息源'
+
+# 必填：获取资讯列表
+def fetch_list(days: int = 3, max_items: int = 10) -> list:
+    """
+    返回 list of dict，每项含:
+      title, date, url, brief, image, image2, image3, keywords, source
+    """
+    ...
+
+# 可选：从 URL 提取文章全文
+def fetch_article(url: str) -> dict:
+    """
+    返回 dict，含:
+      title, url, date, content, images
+    """
+    ...
+
+# 可选：从 URL 提取文章 ID（用于缓存和 compile 中的引用）
+def article_id_from_url(url: str) -> str or None:
+    ...
 ```
 
-- 返回的字典字段必须与 `fetch JSON 字段表` 一致
-- 主流程负责缓存、`list-cache` 和 `.md` 生成
+- `fetch_list()` 只需返回列表数据，主脚本负责缓存和索引生成
+- 不实现 `fetch_article()` 的信息源，`fetch-article` 命令会自动跳过
+- 不实现 `article_id_from_url()` 的信息源，用 URL hash 作为缓存 key
+
+### 实现示例
+
+参考现有 `scripts/sources/cctv-law.py`。源码结构：
+
+```
+scripts/
+├── law-news.py              ← 编排层：fetch / compile / publish / list-cache
+└── sources/
+    ├── __init__.py           ← 空文件
+    └── cctv-law.py           ← 央视网（示例）
+    └── mysource.py           ← 你的新源（新建）
+```
+
+新增源只需要在 sources/ 下创建文件，**无需修改 law-news.py 任何代码**。
