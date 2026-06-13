@@ -1,0 +1,38 @@
+{
+  "name": "minimal-blue",
+  "description": "Minimal 蓝色系 - 清新专业",
+  "source": "md2wechat-skill",
+  "api_theme": "minimal-blue",
+  "series": "minimal",
+  "color": "blue",
+  "colors": {
+    "brand": "#3B82F6",
+    "accent": "#60A5FA",
+    "lead": "#1E40AF",
+    "text": "#1E3A5F",
+    "secondary": "#64748B",
+    "muted": "#94A3B8",
+    "border": "#DBEAFE",
+    "bg": "#F8FAFC",
+    "surface": "#FFFFFF"
+  },
+  "typography": {
+    "title": { "size": "26px", "weight": "300", "align": "center", "color": "#1E3A5F" },
+    "subtitle": { "size": "14px", "weight": "400", "align": "center", "color": "#64748B" },
+    "h1": { "size": "22px", "weight": "600", "align": "left", "color": "#3B82F6", "marginTop": "28px", "marginBottom": "12px" },
+    "h2": { "size": "18px", "weight": "500", "align": "left", "color": "#1E40AF", "marginTop": "22px", "marginBottom": "10px" },
+    "h3": { "size": "16px", "weight": "600", "align": "left", "color": "#3B82F6", "marginTop": "18px", "marginBottom": "8px" },
+    "paragraph": { "size": "16px", "lineHeight": "1.8", "indent": "0", "align": "justify", "color": "#1E3A5F" },
+    "lead": { "size": "15px", "lineHeight": "1.85", "indent": "0", "color": "#64748B" },
+    "caption": { "size": "13px", "color": "#94A3B8", "align": "center" }
+  },
+  "components": {
+    "header": { "bg": "#F8FAFC", "color": "#1E3A5F", "padding": "40px 20px", "borderBottom": "1px solid #DBEAFE" },
+    "nav": { "bg": "#FFFFFF", "padding": "10px 0" },
+    "leadSection": { "bg": "#FFFFFF", "padding": "22px 20px", "borderRadius": "8px", "border": "1px solid #DBEAFE" },
+    "blockquote": { "bg": "#F8FAFC", "padding": "20px 24px", "borderRadius": "8px", "border": "none", "borderLeft": "3px solid #3B82F6", "quoteColor": "#3B82F6" },
+    "contact": { "bg": "#F8FAFC", "padding": "20px", "borderRadius": "8px", "border": "1px solid #DBEAFE" },
+    "footer": { "borderTop": "1px solid #DBEAFE", "padding": "20px" },
+    "divider": { "height": "1px", "bg": "#DBEAFE" }
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "name": "spring-fresh",
+  "description": "春日清新风格 - 生机勃勃",
+  "source": "md2wechat-skill",
+  "api_theme": "spring-fresh",
+  "type": "ai",
+  "colors": {
+    "brand": "#84CC16",
+    "accent": "#A3E635",
+    "lead": "#65A30D",
+    "text": "#365314",
+    "secondary": "#57534E",
+    "muted": "#A8A29E",
+    "border": "#ECFCCB",
+    "bg": "#F7FEE7",
+    "surface": "#FFFFFF"
+  },
+  "typography": {
+    "title": { "size": "26px", "weight": "600", "align": "center", "color": "#84CC16" },
+    "subtitle": { "size": "15px", "weight": "400", "align": "center", "color": "#57534E" },
+    "h1": { "size": "22px", "weight": "600", "align": "left", "color": "#84CC16", "marginTop": "28px", "marginBottom": "12px" },
+    "h2": { "size": "18px", "weight": "500", "align": "left", "color": "#65A30D", "marginTop": "22px", "marginBottom": "10px" },
+    "h3": { "size": "16px", "weight": "600", "align": "left", "color": "#84CC16", "marginTop": "18px", "marginBottom": "8px" },
+    "paragraph": { "size": "16px", "lineHeight": "1.8", "indent": "0", "align": "justify", "color": "#365314" },
+    "lead": { "size": "15px", "lineHeight": "1.85", "indent": "0", "color": "#65A30D" },
+    "caption": { "size": "13px", "color": "#A8A29E", "align": "center" }
+  },
+  "components": {
+    "header": { "bg": "#84CC16", "color": "#1A2E05", "padding": "36px 20px" },
+    "nav": { "bg": "#F7FEE7", "padding": "10px 0" },
+    "leadSection": { "bg": "#ECFCCB", "padding": "22px 20px", "borderRadius": "12px" },
+    "blockquote": { "bg": "#F7FEE7", "padding": "20px 24px", "borderRadius": "12px", "border": "none", "borderLeft": "3px solid #84CC16", "quoteColor": "#84CC16" },
+    "contact": { "bg": "#F7FEE7", "padding": "20px", "borderRadius": "12px" },
+    "footer": { "borderTop": "1px solid #ECFCCB", "padding": "20px" },
+    "divider": { "height": "1px", "bg": "#ECFCCB" }
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "name": "ocean-calm",
+  "description": "海洋宁静风格 - 平和舒缓",
+  "source": "md2wechat-skill",
+  "api_theme": "ocean-calm",
+  "type": "ai",
+  "colors": {
+    "brand": "#0EA5E9",
+    "accent": "#38BDF8",
+    "lead": "#0284C7",
+    "text": "#0C4A6E",
+    "secondary": "#64748B",
+    "muted": "#94A3B8",
+    "border": "#E0F2FE",
+    "bg": "#F0F9FF",
+    "surface": "#FFFFFF"
+  },
+  "typography": {
+    "title": { "size": "26px", "weight": "300", "align": "center", "color": "#0EA5E9" },
+    "subtitle": { "size": "15px", "weight": "400", "align": "center", "color": "#64748B" },
+    "h1": { "size": "22px", "weight": "600", "align": "left", "color": "#0EA5E9", "marginTop": "28px", "marginBottom": "12px" },
+    "h2": { "size": "18px", "weight": "500", "align": "left", "color": "#0284C7", "marginTop": "22px", "marginBottom": "10px" },
+    "h3": { "size": "16px", "weight": "600", "align": "left", "color": "#0EA5E9", "marginTop": "18px", "marginBottom": "8px" },
+    "paragraph": { "size": "16px", "lineHeight": "1.8", "indent": "0", "align": "justify", "color": "#0C4A6E" },
+    "lead": { "size": "15px", "lineHeight": "1.85", "indent": "0", "color": "#0284C7" },
+    "caption": { "size": "13px", "color": "#94A3B8", "align": "center" }
+  },
+  "components": {
+    "header": { "bg": "#0369A1", "color": "#FFFFFF", "padding": "36px 20px" },
+    "nav": { "bg": "#F0F9FF", "padding": "10px 0" },
+    "leadSection": { "bg": "#E0F2FE", "padding": "22px 20px", "borderRadius": "12px" },
+    "blockquote": { "bg": "#F0F9FF", "padding": "20px 24px", "borderRadius": "12px", "border": "none", "borderLeft": "3px solid #0EA5E9", "quoteColor": "#0EA5E9" },
+    "contact": { "bg": "#F0F9FF", "padding": "20px", "borderRadius": "12px" },
+    "footer": { "borderTop": "1px solid #E0F2FE", "padding": "20px" },
+    "divider": { "height": "1px", "bg": "#E0F2FE" }
+  }
+}

@@ -8,8 +8,9 @@ law-news — 法律资讯获取脚本
 用法:
   python3 law-news.py fetch <source> [--days 3] [--max 10]
   python3 law-news.py fetch-article <url>
-  python3 law-news.py compile --articles <id,id,...> --style 简报|深度|专题 [--title "标题"]
+  python3 law-news.py compile --articles <id,id,...> --style 简报|深度|专题 [--title "标题"] [--wechat [主题]]
   python3 law-news.py publish <markdown_path> [--title "标题"] [--wiki <space_id>]
+  python3 law-news.py publish-wechat <source> [--max 10] [--style 简报|深度|专题] [--theme <主题>]
   python3 law-news.py list-cache [<source>]
 
 环境变量:
@@ -305,7 +306,7 @@ def fetch_article_cmd(url):
 
 
 
-def compile_newsletter(articles_csv, style='简报', title=None, lawyer_comments=None, lawyer_profile=None):
+def compile_newsletter(articles_csv, style='简报', title=None, lawyer_comments=None, lawyer_profile=None, wechat_theme=None):
     if not articles_csv:
         die("ERROR: --articles is required")
     if not title:
@@ -440,10 +441,75 @@ def compile_newsletter(articles_csv, style='简报', title=None, lawyer_comments
     with open(md_file, 'w', encoding='utf-8') as f:
         f.write('\n'.join(lines))
 
+    # Optional: also generate WeChat HTML
+    if wechat_theme:
+        try:
+            _generate_wechat_html(md_file, title, wechat_theme)
+        except Exception as e:
+            print(f"⚠️  WeChat HTML 生成失败: {e}", file=sys.stderr)
+
     return md_file
 
 
 # ===== publish: .md → 飞书文档 =====
+
+def _generate_wechat_html(md_file, title, theme='legal'):
+    """Generate WeChat HTML version of a compiled markdown file.
+    Calls md-to-wechat CLI directly."""
+    md2wechat_cli = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+        '..', 'md-to-wechat', 'scripts', 'cli.js'
+    )
+    if not os.path.isfile(md2wechat_cli):
+        print(f"⚠️  md-to-wechat CLI 未找到，跳过 WeChat HTML 生成: {md2wechat_cli}", file=sys.stderr)
+        return
+
+    # Check node availability
+    try:
+        subprocess.run(['node', '--version'], capture_output=True, check=True)
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        print("⚠️  node 不可用，跳过 WeChat HTML 生成", file=sys.stderr)
+        return
+
+    # Create a temp copy with YAML frontmatter so the converter picks up the title
+    with open(md_file, 'r', encoding='utf-8') as f:
+        content = f.read()
+
+    has_fm = content.lstrip().startswith('---')
+    tmp_path = None
+    if not has_fm and title:
+        first_line = content.lstrip().split('\n')[0].strip()
+        h1_title = re.sub(r'^#\s+', '', first_line) if first_line.startswith('# ') else title
+        fm = f'---\ntitle: {h1_title}\n---\n\n'
+        content_no_h1 = re.sub(r'^#\s+.*\n?', '', content.lstrip(), count=1)
+        import tempfile
+        tmp_fd, tmp_path = tempfile.mkstemp(suffix='.md', prefix='lawnews_wechat_')
+        with os.fdopen(tmp_fd, 'w', encoding='utf-8') as f:
+            f.write(fm + content_no_h1.lstrip())
+
+    try:
+        input_file = tmp_path if tmp_path else md_file
+        output = os.path.join(
+            os.path.dirname(md_file),
+            f'{os.path.splitext(os.path.basename(md_file))[0]}_{theme}.html'
+        )
+
+        proc = subprocess.run(
+            ['node', md2wechat_cli, 'converter', 'convert', input_file,
+             '--theme', theme, '-o', output],
+            capture_output=True, text=True, timeout=30
+        )
+        if proc.returncode == 0:
+            print(f"✅ WeChat HTML 已生成: {output}", file=sys.stderr)
+        else:
+            err = proc.stderr.strip() or proc.stdout.strip()
+            print(f"⚠️  WeChat HTML 生成失败: {err}", file=sys.stderr)
+    except subprocess.TimeoutExpired:
+        print("⚠️  WeChat HTML 生成超时", file=sys.stderr)
+    finally:
+        if tmp_path and os.path.isfile(tmp_path):
+            os.remove(tmp_path)
+
 
 def publish_doc(filepath, title='法律资讯', wiki=None):
     if not os.path.isfile(filepath):
@@ -612,6 +678,141 @@ def list_cache(source=None):
         print("  (无缓存)")
 
 
+# ===== publish-wechat: 一键端到端工作流 =====
+
+def publish_wechat_flow(source='cctv-law', max_items=5, style='简报', theme='legal'):
+    """
+    一键联动：fetch → fetch-article all → compile with --wechat
+
+    适用于 AI 不做筛选，直接抓最新 N 条发布到公众号的场景。
+    如果需要 AI 筛选文章后再编译，请分步使用 fetch → (AI 选) → fetch-article → compile --wechat。
+
+    返回 [markdown_path, html_path]
+    """
+    src_info = SOURCES.get(source)
+    if src_info is None:
+        available = ', '.join(SOURCES.keys())
+        die(f"ERROR: unknown source '{source}'. 可用信息源: {available}")
+
+    mod = src_info.get('module')
+    if not mod or not hasattr(mod, 'fetch_list'):
+        die(f"ERROR: source '{source}' 未实现 fetch_list()")
+
+    cache_dir = get_cache_dir()
+    raw_dir = os.path.join(cache_dir, 'raw', source)
+    articles_dir = os.path.join(cache_dir, 'articles')
+    exports_dir = os.path.join(cache_dir, 'exports')
+    ensure_dirs(raw_dir, articles_dir, exports_dir)
+
+    # Step 1: fetch list
+    print(f"📡 [{source}] 获取资讯列表...", file=sys.stderr)
+    items = mod.fetch_list(days=3, max_items=max_items)
+    name = src_info.get('name', source)
+
+    # Save raw
+    raw_file = os.path.join(raw_dir, f"{today()}.json")
+    with open(raw_file, 'w', encoding='utf-8') as f:
+        json.dump({'source': source, 'count': len(items), 'items': items}, f, ensure_ascii=False)
+    print(f"   → {len(items)} 条", file=sys.stderr)
+
+    # Step 2: fetch articles
+    article_ids = []
+    fetched_count = 0
+    for item in items:
+        url = item.get('url', '')
+        if not url:
+            continue
+
+        # Try to get article ID
+        article_id = None
+        if mod and hasattr(mod, 'article_id_from_url'):
+            try:
+                article_id = mod.article_id_from_url(url)
+            except Exception:
+                pass
+        if not article_id:
+            article_id = str(hash(url))[:16]
+
+        # Check cache
+        md_path = os.path.join(articles_dir, f'{article_id}.md')
+        if os.path.isfile(md_path):
+            article_ids.append(article_id)
+            fetched_count += 1
+            continue
+
+        # Fetch
+        if mod and hasattr(mod, 'fetch_article'):
+            try:
+                data = mod.fetch_article(url)
+                if data and data.get('content', '').strip():
+                    data['source'] = source
+                    # Backfill metadata from list
+                    if not data.get('image'):
+                        data['image'] = item.get('image', '') or ''
+                    if not data.get('keywords'):
+                        data['keywords'] = item.get('keywords', [])
+
+                    # Save JSON
+                    json_path = os.path.join(articles_dir, f'{article_id}.json')
+                    with open(json_path, 'w', encoding='utf-8') as f:
+                        json.dump(data, f, ensure_ascii=False)
+
+                    # Save MD
+                    src_name = src_info.get('name', source)
+                    md_lines = [
+                        f'# {data["title"]}',
+                        '',
+                        f'**来源**: {src_name} | {data["date"]} | [原文链接]({data["url"]})',
+                        '',
+                    ]
+                    if data.get('image'):
+                        md_lines.append(f'![]({data["image"]})')
+                        md_lines.append('')
+                    md_lines.append(data['content'])
+                    md_lines.append('')
+                    md_lines.append('---')
+                    with open(md_path, 'w', encoding='utf-8') as f:
+                        f.write('\n'.join(md_lines))
+
+                    article_ids.append(article_id)
+                    fetched_count += 1
+                    print(f"   ✓ {data['title'][:50]}...", file=sys.stderr)
+            except Exception as e:
+                print(f"   ⚠️  {url[:60]} 抓取失败: {e}", file=sys.stderr)
+
+    if not article_ids:
+        die("ERROR: 没有可用的文章")
+
+    print(f"📝 {fetched_count} 篇文章已就绪", file=sys.stderr)
+
+    # Step 3: compile with --wechat
+    title = f'{name}{style} {today()}'
+    print(f"🔄 汇编中... 风格: {style}, 主题: {theme}", file=sys.stderr)
+
+    md_file = compile_newsletter(
+        ','.join(article_ids),
+        style=style,
+        title=title,
+        wechat_theme=theme,
+        lawyer_comments=None,
+        lawyer_profile=None
+    )
+
+    # Build expected HTML path (compile_newsletter already generated it)
+    safe_title = re.sub(r'[\\/:*?"<>| ]', '_', title)
+    html_file = os.path.join(exports_dir, f'{today()}_{safe_title}_{theme}.html')
+    if not os.path.isfile(html_file):
+        # Try alternative naming: the compile output basename + theme
+        md_basename = os.path.splitext(os.path.basename(md_file))[0]
+        html_file = os.path.join(exports_dir, f'{md_basename}_{theme}.html')
+
+    result = [md_file]
+    if os.path.isfile(html_file):
+        result.append(html_file)
+
+    return result
+
+
 # ===== main =====
 
 def main():
@@ -716,6 +917,7 @@ def main():
         title = None
         lawyer_comments = None
         lawyer_profile = None
+        wechat_theme = None
         i = 2
         while i < len(sys.argv):
             if sys.argv[i] == '--articles' and i + 1 < len(sys.argv):
@@ -733,9 +935,17 @@ def main():
             elif sys.argv[i] == '--lawyer-profile' and i + 1 < len(sys.argv):
                 lawyer_profile = sys.argv[i + 1]
                 i += 2
+            elif sys.argv[i] == '--wechat':
+                # --wechat [theme]: optional theme name, defaults to 'legal'
+                if i + 1 < len(sys.argv) and not sys.argv[i + 1].startswith('--'):
+                    wechat_theme = sys.argv[i + 1]
+                    i += 2
+                else:
+                    wechat_theme = 'legal'
+                    i += 1
             else:
                 i += 1
-        print(compile_newsletter(articles_csv, style, title, lawyer_comments, lawyer_profile))
+        print(compile_newsletter(articles_csv, style, title, lawyer_comments, lawyer_profile, wechat_theme))
 
     elif cmd == 'publish':
         if len(sys.argv) < 3:
@@ -754,6 +964,30 @@ def main():
             else:
                 i += 1
         publish_doc(filepath, title, wiki)
+
+    elif cmd == 'publish-wechat':
+        # One-command flow: fetch → fetch-article all → compile with --wechat
+        source = sys.argv[2] if len(sys.argv) > 2 else 'cctv-law'
+        max_items = 5
+        style = '简报'
+        theme = 'legal'
+        i = 3
+        while i < len(sys.argv):
+            if sys.argv[i] == '--max' and i + 1 < len(sys.argv):
+                max_items = int(sys.argv[i + 1])
+                i += 2
+            elif sys.argv[i] == '--style' and i + 1 < len(sys.argv):
+                style = sys.argv[i + 1]
+                i += 2
+            elif sys.argv[i] == '--theme' and i + 1 < len(sys.argv):
+                theme = sys.argv[i + 1]
+                i += 2
+            else:
+                i += 1
+
+        result_paths = publish_wechat_flow(source, max_items, style, theme)
+        for p in result_paths:
+            print(p)
 
     elif cmd == 'list-cache':
         source = sys.argv[2] if len(sys.argv) > 2 else None

@@ -1,11 +1,11 @@
 ---
 name: feishu-lawtools
 version: 1.2.0
-description: "飞书法律工具箱。法律条文导入飞书在线文档、法律资讯获取、AI划重点标记、AI批注解读。触发方式：/law-import、/law-news、/law-highlight、/law-annotate、/法律导入、/法律资讯、/划重点、/法律批注"
+description: "飞书法律工具箱。法律条文导入飞书在线文档、法律资讯获取、AI划重点标记、AI批注解读、Markdown/飞书文档→公众号排版。触发方式：/law-import、/law-news、/law-highlight、/law-annotate、/法律导入、/法律资讯、/划重点、/法律批注、/公众号"
 compatibility: "pi, Claude Code, Codex, OpenCode - 任何能执行命令和调用 lark-cli 的 AI agent"
 metadata:
   requires:
-    bins: ["lark-cli", "python3"]
+    bins: ["lark-cli", "python3", "node"]
   cross-agent: true
   categories:
     import: 导入与创建
@@ -18,6 +18,7 @@ metadata:
     - tools/law-news/law-news.md
     - tools/law-highlight/law-highlight.md
     - tools/law-annotate/law-annotate.md
+
 ---
 
 # 飞书法律工具箱 (feishu-lawtools)
@@ -73,12 +74,15 @@ cd feishu-lawtools
 
 各工具依赖汇总。AI agent 应在执行对应工具前置检查时确认依赖可用。
 
-| 工具 | 全局依赖 | 用户配置 | 脚本语言 | 说明 |
+| 工具 | 全局依赖 | 用户配置 | 核心能力 | 说明 |
 |------|----------|----------|----------|------|
-| `law-import` | `lark-cli` | — | 无脚本（纯 AI 指令） | URL/文件 → 飞书文档 |
-| `law-news` | `lark-cli`, `python3` | `lawyer-profile.json`（可选） | Python（标准库） | 新闻抓取、排版、发布 |
-| `law-highlight` | `lark-cli` | — | 无脚本（纯 CLI 指令） | 正文标记 |
-| `law-annotate` | `lark-cli` | — | 无脚本（纯 AI 指令） | AI 批注 |
+| `law-import` | `lark-cli` | — | AI 指令 | URL/文件 → 飞书文档 |
+| `law-news` | `lark-cli`, `python3` | `lawyer-profile.json`（可选） | Python 脚本 | 新闻抓取、排版、发布 |
+| `law-highlight` | `lark-cli` | — | AI 指令 | 正文标记 |
+| `law-annotate` | `lark-cli` | — | AI 指令 | AI 批注 |
+| `→ 公众号` | `lark-cli`, `node` | — | 调用 `tools/md-to-wechat` CLI | Markdown/飞书文档 → 公众号 HTML |
+
+> 公众号转换能力由 `tools/md-to-wechat/` 提供（18 主题的 Node.js 转换器，`scripts/cli.js`），非独立工具，各 skill 可直接调用。
 
 > 「用户配置」列：某些工具有可选的个性化配置（如 `law-news` 的「律师说」评论档案），首次使用 AI 应提示用户 `cp` 示例配置并填写。
 
@@ -102,9 +106,13 @@ npm install -g @larksuite/cli
 
 # python3（仅 law-news 需要，macOS/Linux 自带，Windows 到 python.org 下载）
 python3 --version
+
+# node（仅公众号转换需要，macOS/Linux 自带或到 nodejs.org 下载）
+node --version
 ```
 
 > 所有 `.py` 脚本**仅使用 Python 标准库**，无需 `pip install`。
+> 公众号转换依赖 `tools/md-to-wechat/scripts/cli.js`（Node.js 18 主题转换器）。
 
 ---
 
@@ -189,6 +197,7 @@ python3 --version || echo "请到 https://python.org 安装 Python 3"
 > "看看最近有什么法治新闻" → `/law-news`
 > "给文档里的 '故意犯罪' 划重点" → `/law-highlight`
 > "给这个法律逐条加 AI 批注" → `/law-annotate`
+> "把这篇飞书文档转成公众号排版" → AI 调 `md-to-wechat` CLI + `lark-doc`
 
 AI agent 会根据对应工具文件的步骤说明自动调用 `lark-cli` 完成操作。
 

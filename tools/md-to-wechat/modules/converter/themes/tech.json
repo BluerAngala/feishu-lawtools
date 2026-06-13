@@ -1,0 +1,34 @@
+{
+  "name": "tech",
+  "description": "科技现代风格 - 深色主题",
+  "colors": {
+    "brand": "#0EA5E9",
+    "accent": "#06B6D4",
+    "lead": "#38BDF8",
+    "text": "#E2E8F0",
+    "secondary": "#94A3B8",
+    "muted": "#64748B",
+    "border": "#334155",
+    "bg": "#0F172A",
+    "surface": "#1E293B"
+  },
+  "typography": {
+    "title": { "size": "26px", "weight": "600", "align": "center", "letterSpacing": "1px" },
+    "subtitle": { "size": "14px", "weight": "400", "align": "center", "color": "secondary" },
+    "h1": { "size": "26px", "weight": "600", "align": "center", "color": "brand" },
+    "h2": { "size": "16px", "weight": "400", "align": "center", "color": "accent" },
+    "h3": { "size": "16px", "weight": "600", "color": "brand", "marginTop": "28px", "marginBottom": "12px" },
+    "paragraph": { "size": "15px", "lineHeight": "1.85", "indent": "0", "align": "left" },
+    "lead": { "size": "14px", "lineHeight": "1.85", "indent": "0", "color": "lead" },
+    "caption": { "size": "12px", "color": "muted", "align": "center" }
+  },
+  "components": {
+    "header": { "bg": "#0F172A", "color": "#0EA5E9", "padding": "32px 20px", "borderBottom": "1px solid #334155" },
+    "nav": { "bg": "#1E293B", "padding": "10px 0" },
+    "leadSection": { "bg": "#1E293B", "padding": "22px 20px", "borderRadius": "8px", "border": "1px solid #334155" },
+    "blockquote": { "bg": "#1E293B", "padding": "20px 24px", "borderRadius": "8px", "border": "none", "borderLeft": "3px solid #0EA5E9", "quoteColor": "#38BDF8" },
+    "contact": { "bg": "#1E293B", "padding": "20px", "borderRadius": "8px", "border": "1px solid #334155" },
+    "footer": { "borderTop": "1px solid #334155", "padding": "20px" },
+    "divider": { "height": "1px", "bg": "#334155" }
+  }
+}

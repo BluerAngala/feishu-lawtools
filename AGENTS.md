@@ -43,6 +43,7 @@ lark-cli auth status
 | law-news | 资讯源 → 法律文章 → 飞书 | `curl` + `docs +create` / `wiki +move` |
 | law-highlight | 正文加粗/标色 | `docs +update str_replace` 或 `PATCH blocks/{id}` |
 | law-annotate | 逐条 AI 批注 | `drive +add-comment` |
+| → 公众号 | Markdown/飞书文档 → 公众号 HTML | `node tools/md-to-wechat/scripts/cli.js converter convert` |
 
 ## 维护
 

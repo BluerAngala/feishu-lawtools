@@ -1,0 +1,36 @@
+{
+  "name": "bytedance",
+  "description": "字节跳动风格 - 年轻活力",
+  "source": "md2wechat-skill",
+  "api_theme": "bytedance",
+  "colors": {
+    "brand": "#008C7A",
+    "accent": "#FF0050",
+    "lead": "#00A896",
+    "text": "#161823",
+    "secondary": "#666666",
+    "muted": "#999999",
+    "border": "#E8E8E8",
+    "bg": "#FFFFFF",
+    "surface": "#F8F8F8"
+  },
+  "typography": {
+    "title": { "size": "26px", "weight": "700", "align": "center", "color": "#161823" },
+    "subtitle": { "size": "15px", "weight": "400", "align": "center", "color": "#666666" },
+    "h1": { "size": "22px", "weight": "700", "align": "left", "color": "#00C8B1", "marginTop": "28px", "marginBottom": "12px" },
+    "h2": { "size": "18px", "weight": "600", "align": "left", "color": "#161823", "marginTop": "22px", "marginBottom": "10px" },
+    "h3": { "size": "16px", "weight": "600", "align": "left", "color": "#00C8B1", "marginTop": "18px", "marginBottom": "8px" },
+    "paragraph": { "size": "16px", "lineHeight": "1.8", "indent": "0", "align": "justify", "color": "#161823" },
+    "lead": { "size": "15px", "lineHeight": "1.85", "indent": "0", "color": "#00A896" },
+    "caption": { "size": "13px", "color": "#999999", "align": "center" }
+  },
+  "components": {
+    "header": { "bg": "#00C8B1", "color": "#FFFFFF", "padding": "36px 20px" },
+    "nav": { "bg": "#F8F8F8", "padding": "10px 0" },
+    "leadSection": { "bg": "#F8F8F8", "padding": "22px 20px", "borderRadius": "8px", "borderLeft": "4px solid #00C8B1" },
+    "blockquote": { "bg": "#F8F8F8", "padding": "20px 24px", "borderRadius": "8px", "border": "none", "borderLeft": "4px solid #FF0050", "quoteColor": "#FF0050" },
+    "contact": { "bg": "#F8F8F8", "padding": "20px", "borderRadius": "8px", "borderLeft": "4px solid #00C8B1" },
+    "footer": { "borderTop": "1px solid #E8E8E8", "padding": "20px" },
+    "divider": { "height": "1px", "bg": "#E8E8E8" }
+  }
+}

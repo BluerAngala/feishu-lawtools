@@ -1,0 +1,41 @@
+{
+  "name": "elegant-gold",
+  "description": "Elegant 金色系 - 层次丰富",
+  "source": "md2wechat-skill",
+  "api_theme": "elegant-gold",
+  "series": "elegant",
+  "color": "gold",
+  "layout": "左边框递减 + 渐变背景",
+  "mood": "层次丰富",
+  "best_for": "深度文章、情感故事",
+  "colors": {
+    "brand": "#B8860B",
+    "accent": "#DAA520",
+    "lead": "#8B6914",
+    "text": "#2C2419",
+    "secondary": "#6B5B45",
+    "muted": "#9B8B75",
+    "border": "#D4C4A8",
+    "bg": "#FFFBF0",
+    "surface": "#FFFFFF"
+  },
+  "typography": {
+    "title": { "size": "26px", "weight": "600", "align": "center", "color": "#B8860B" },
+    "subtitle": { "size": "15px", "weight": "400", "align": "center", "color": "#6B5B45" },
+    "h1": { "size": "22px", "weight": "600", "align": "left", "color": "#B8860B", "marginTop": "28px", "marginBottom": "12px" },
+    "h2": { "size": "18px", "weight": "500", "align": "left", "color": "#8B6914", "marginTop": "22px", "marginBottom": "10px" },
+    "h3": { "size": "16px", "weight": "600", "align": "left", "color": "#B8860B", "marginTop": "18px", "marginBottom": "8px" },
+    "paragraph": { "size": "16px", "lineHeight": "1.8", "indent": "2em", "align": "justify", "color": "#2C2419" },
+    "lead": { "size": "15px", "lineHeight": "1.85", "indent": "2em", "color": "#8B6914" },
+    "caption": { "size": "13px", "color": "#9B8B75", "align": "center" }
+  },
+  "components": {
+    "header": { "bg": "linear-gradient(135deg, #B8860B 0%, #DAA520 100%)", "color": "#FFFFFF", "padding": "32px 20px" },
+    "nav": { "bg": "#FFFBF0", "padding": "10px 0" },
+    "leadSection": { "bg": "linear-gradient(135deg, #FFFBF0 0%, #FFF8E7 100%)", "padding": "22px 20px", "borderRadius": "8px", "borderLeft": "4px solid #B8860B" },
+    "blockquote": { "bg": "#FFF8E7", "padding": "20px 24px", "borderRadius": "8px", "border": "none", "borderLeft": "3px solid #DAA520", "quoteColor": "#B8860B" },
+    "contact": { "bg": "#FFF8E7", "padding": "20px", "borderRadius": "8px", "borderLeft": "3px solid #B8860B" },
+    "footer": { "borderTop": "1px solid #D4C4A8", "padding": "20px" },
+    "divider": { "height": "1px", "bg": "#D4C4A8" }
+  }
+}

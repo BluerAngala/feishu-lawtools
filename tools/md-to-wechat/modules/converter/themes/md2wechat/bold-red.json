@@ -1,0 +1,38 @@
+{
+  "name": "bold-red",
+  "description": "Bold 红色系 - 醒目有力",
+  "source": "md2wechat-skill",
+  "api_theme": "bold-red",
+  "series": "bold",
+  "color": "red",
+  "colors": {
+    "brand": "#DC2626",
+    "accent": "#EF4444",
+    "lead": "#B91C1C",
+    "text": "#7F1D1D",
+    "secondary": "#6B7280",
+    "muted": "#9CA3AF",
+    "border": "#FEE2E2",
+    "bg": "#FEF2F2",
+    "surface": "#FFFFFF"
+  },
+  "typography": {
+    "title": { "size": "28px", "weight": "700", "align": "center", "color": "#DC2626" },
+    "subtitle": { "size": "15px", "weight": "400", "align": "center", "color": "#6B7280" },
+    "h1": { "size": "24px", "weight": "700", "align": "left", "color": "#DC2626", "marginTop": "28px", "marginBottom": "12px" },
+    "h2": { "size": "20px", "weight": "600", "align": "left", "color": "#B91C1C", "marginTop": "22px", "marginBottom": "10px" },
+    "h3": { "size": "17px", "weight": "600", "align": "left", "color": "#DC2626", "marginTop": "18px", "marginBottom": "8px" },
+    "paragraph": { "size": "16px", "lineHeight": "1.8", "indent": "0", "align": "justify", "color": "#7F1D1D" },
+    "lead": { "size": "15px", "lineHeight": "1.85", "indent": "0", "color": "#B91C1C" },
+    "caption": { "size": "13px", "color": "#9CA3AF", "align": "center" }
+  },
+  "components": {
+    "header": { "bg": "#DC2626", "color": "#FFFFFF", "padding": "36px 20px" },
+    "nav": { "bg": "#FEF2F2", "padding": "10px 0" },
+    "leadSection": { "bg": "#FEE2E2", "padding": "22px 20px", "borderRadius": "8px", "borderLeft": "4px solid #DC2626" },
+    "blockquote": { "bg": "#FEF2F2", "padding": "20px 24px", "borderRadius": "8px", "border": "none", "borderLeft": "4px solid #EF4444", "quoteColor": "#DC2626" },
+    "contact": { "bg": "#FEF2F2", "padding": "20px", "borderRadius": "8px", "borderLeft": "4px solid #DC2626" },
+    "footer": { "borderTop": "1px solid #FEE2E2", "padding": "20px" },
+    "divider": { "height": "1px", "bg": "#FEE2E2" }
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "name": "chinese",
+  "description": "中式传统风格 - 国风美学",
+  "source": "md2wechat-skill",
+  "api_theme": "chinese",
+  "colors": {
+    "brand": "#8B4513",
+    "accent": "#D2691E",
+    "lead": "#A0522D",
+    "text": "#3D2914",
+    "secondary": "#6B4423",
+    "muted": "#8B7355",
+    "border": "#D2B48C",
+    "bg": "#FAF0E6",
+    "surface": "#FFF8DC"
+  },
+  "typography": {
+    "title": { "size": "26px", "weight": "600", "align": "center", "color": "#8B4513", "letterSpacing": "2px" },
+    "subtitle": { "size": "14px", "weight": "400", "align": "center", "color": "#6B4423" },
+    "h1": { "size": "22px", "weight": "600", "align": "center", "color": "#8B4513", "marginTop": "28px", "marginBottom": "12px" },
+    "h2": { "size": "18px", "weight": "500", "align": "center", "color": "#A0522D", "marginTop": "22px", "marginBottom": "10px" },
+    "h3": { "size": "16px", "weight": "600", "align": "left", "color": "#8B4513", "marginTop": "18px", "marginBottom": "8px" },
+    "paragraph": { "size": "16px", "lineHeight": "1.9", "indent": "2em", "align": "justify", "color": "#3D2914" },
+    "lead": { "size": "15px", "lineHeight": "1.9", "indent": "2em", "color": "#A0522D" },
+    "caption": { "size": "13px", "color": "#8B7355", "align": "center" }
+  },
+  "components": {
+    "header": { "bg": "#8B4513", "color": "#FFF8DC", "padding": "36px 20px" },
+    "nav": { "bg": "#FAF0E6", "padding": "10px 0" },
+    "leadSection": { "bg": "#FFF8DC", "padding": "24px 20px", "borderRadius": "4px", "border": "1px solid #D2B48C" },
+    "blockquote": { "bg": "#FAF0E6", "padding": "20px 24px", "borderRadius": "4px", "border": "none", "borderLeft": "3px solid #8B4513", "quoteColor": "#8B4513" },
+    "contact": { "bg": "#FFF8DC", "padding": "20px", "borderRadius": "4px", "border": "1px solid #D2B48C" },
+    "footer": { "borderTop": "1px solid #D2B48C", "padding": "20px" },
+    "divider": { "height": "1px", "bg": "#D2B48C" }
+  }
+}

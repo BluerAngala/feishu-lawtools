@@ -1,0 +1,34 @@
+{
+  "name": "academic",
+  "description": "学术严谨风格 - 传统学术感",
+  "colors": {
+    "brand": "#1E293B",
+    "accent": "#475569",
+    "lead": "#64748B",
+    "text": "#334155",
+    "secondary": "#64748B",
+    "muted": "#94A3B8",
+    "border": "#CBD5E1",
+    "bg": "#F8FAFC",
+    "surface": "#FFFFFF"
+  },
+  "typography": {
+    "title": { "size": "22px", "weight": "700", "align": "left", "letterSpacing": "0" },
+    "subtitle": { "size": "13px", "weight": "400", "align": "left", "color": "secondary", "fontStyle": "italic" },
+    "h1": { "size": "22px", "weight": "700", "align": "left", "color": "brand" },
+    "h2": { "size": "14px", "weight": "600", "align": "left", "color": "accent", "textTransform": "uppercase", "letterSpacing": "0.5px" },
+    "h3": { "size": "14px", "weight": "700", "color": "brand", "marginTop": "28px", "marginBottom": "12px" },
+    "paragraph": { "size": "14px", "lineHeight": "1.85", "indent": "2em", "align": "justify" },
+    "lead": { "size": "13px", "lineHeight": "1.85", "indent": "2em", "color": "secondary", "fontStyle": "italic" },
+    "caption": { "size": "11px", "color": "muted", "align": "left", "fontStyle": "italic" }
+  },
+  "components": {
+    "header": { "bg": "#1E293B", "color": "#fff", "padding": "28px 24px" },
+    "nav": { "bg": "#F1F5F9", "padding": "10px 0", "borderBottom": "2px solid #CBD5E1" },
+    "leadSection": { "bg": "#FFFFFF", "padding": "20px 24px", "border": "1px solid #CBD5E1", "borderRadius": "0" },
+    "blockquote": { "bg": "#F8FAFC", "padding": "20px 24px", "borderRadius": "0", "border": "none", "quoteColor": "#64748B", "fontStyle": "italic" },
+    "contact": { "bg": "#FFFFFF", "padding": "20px 24px", "border": "1px solid #CBD5E1", "borderTop": "3px solid #475569" },
+    "footer": { "borderTop": "2px solid #CBD5E1", "padding": "20px" },
+    "divider": { "height": "1px", "bg": "#CBD5E1" }
+  }
+}

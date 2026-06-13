@@ -1,0 +1,34 @@
+{
+  "name": "warm",
+  "description": "温暖人文风格 - 暖色调",
+  "colors": {
+    "brand": "#92400E",
+    "accent": "#B45309",
+    "lead": "#A16207",
+    "text": "#3F3F46",
+    "secondary": "#52525B",
+    "muted": "#A1A1AA",
+    "border": "#E4E4E7",
+    "bg": "#FAFAF9",
+    "surface": "#FFFFFF"
+  },
+  "typography": {
+    "title": { "size": "24px", "weight": "600", "align": "center", "letterSpacing": "0.5px" },
+    "subtitle": { "size": "15px", "weight": "400", "align": "center", "color": "secondary" },
+    "h1": { "size": "24px", "weight": "600", "align": "center", "color": "brand" },
+    "h2": { "size": "17px", "weight": "400", "align": "center", "color": "secondary" },
+    "h3": { "size": "17px", "weight": "600", "color": "brand", "marginTop": "28px", "marginBottom": "14px" },
+    "paragraph": { "size": "16px", "lineHeight": "1.9", "indent": "0", "align": "left" },
+    "lead": { "size": "15px", "lineHeight": "1.9", "indent": "0", "color": "lead" },
+    "caption": { "size": "13px", "color": "muted", "align": "center" }
+  },
+  "components": {
+    "header": { "bg": "#92400E", "color": "#fff", "padding": "32px 20px" },
+    "nav": { "bg": "#F5F5F4", "padding": "12px 0" },
+    "leadSection": { "bg": "#FFFBEB", "padding": "24px 20px", "borderRadius": "8px", "border": "1px solid #FDE68A" },
+    "blockquote": { "bg": "#F5F5F4", "padding": "20px 24px", "borderRadius": "8px", "border": "none", "quoteColor": "#B45309" },
+    "contact": { "bg": "#F5F5F4", "padding": "20px", "borderRadius": "8px" },
+    "footer": { "borderTop": "1px solid #E4E4E7", "padding": "20px" },
+    "divider": { "height": "1px", "bg": "#E4E4E7" }
+  }
+}

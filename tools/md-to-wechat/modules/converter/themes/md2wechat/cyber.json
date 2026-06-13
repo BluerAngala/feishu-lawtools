@@ -1,0 +1,36 @@
+{
+  "name": "cyber",
+  "description": "赛博朋克风格 - 未来科技",
+  "source": "md2wechat-skill",
+  "api_theme": "cyber",
+  "colors": {
+    "brand": "#FF00FF",
+    "accent": "#00FFFF",
+    "lead": "#FFFF00",
+    "text": "#E0E0E0",
+    "secondary": "#A0A0A0",
+    "muted": "#707070",
+    "border": "#333333",
+    "bg": "#0A0A0A",
+    "surface": "#1A1A1A"
+  },
+  "typography": {
+    "title": { "size": "28px", "weight": "700", "align": "center", "color": "#FF00FF", "letterSpacing": "1px" },
+    "subtitle": { "size": "14px", "weight": "400", "align": "center", "color": "#00FFFF" },
+    "h1": { "size": "24px", "weight": "700", "align": "left", "color": "#FF00FF", "marginTop": "28px", "marginBottom": "12px" },
+    "h2": { "size": "20px", "weight": "600", "align": "left", "color": "#00FFFF", "marginTop": "22px", "marginBottom": "10px" },
+    "h3": { "size": "17px", "weight": "600", "align": "left", "color": "#FFFF00", "marginTop": "18px", "marginBottom": "8px" },
+    "paragraph": { "size": "16px", "lineHeight": "1.8", "indent": "0", "align": "justify", "color": "#E0E0E0" },
+    "lead": { "size": "15px", "lineHeight": "1.85", "indent": "0", "color": "#00FFFF" },
+    "caption": { "size": "13px", "color": "#707070", "align": "center" }
+  },
+  "components": {
+    "header": { "bg": "#0A0A0A", "color": "#FF00FF", "padding": "36px 20px", "borderBottom": "2px solid #FF00FF" },
+    "nav": { "bg": "#1A1A1A", "padding": "10px 0" },
+    "leadSection": { "bg": "#1A1A1A", "padding": "22px 20px", "borderRadius": "0", "border": "1px solid #FF00FF", "borderLeft": "4px solid #FF00FF" },
+    "blockquote": { "bg": "#1A1A1A", "padding": "20px 24px", "borderRadius": "0", "border": "1px solid #00FFFF", "borderLeft": "4px solid #00FFFF", "quoteColor": "#00FFFF" },
+    "contact": { "bg": "#1A1A1A", "padding": "20px", "borderRadius": "0", "border": "1px solid #FFFF00" },
+    "footer": { "borderTop": "2px solid #333333", "padding": "20px" },
+    "divider": { "height": "1px", "bg": "#333333" }
+  }
+}

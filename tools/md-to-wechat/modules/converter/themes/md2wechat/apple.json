@@ -1,0 +1,36 @@
+{
+  "name": "apple",
+  "description": "Apple 极简风格",
+  "source": "md2wechat-skill",
+  "api_theme": "apple",
+  "colors": {
+    "brand": "#007AFF",
+    "accent": "#5856D6",
+    "lead": "#1D1D1F",
+    "text": "#1D1D1F",
+    "secondary": "#86868B",
+    "muted": "#A1A1A6",
+    "border": "#D2D2D7",
+    "bg": "#FFFFFF",
+    "surface": "#F5F5F7"
+  },
+  "typography": {
+    "title": { "size": "28px", "weight": "600", "align": "center", "color": "#1D1D1F", "letterSpacing": "-0.5px" },
+    "subtitle": { "size": "15px", "weight": "400", "align": "center", "color": "#86868B" },
+    "h1": { "size": "24px", "weight": "600", "align": "left", "color": "#1D1D1F", "marginTop": "32px", "marginBottom": "12px" },
+    "h2": { "size": "20px", "weight": "600", "align": "left", "color": "#1D1D1F", "marginTop": "24px", "marginBottom": "10px" },
+    "h3": { "size": "17px", "weight": "600", "align": "left", "color": "#1D1D1F", "marginTop": "20px", "marginBottom": "8px" },
+    "paragraph": { "size": "17px", "lineHeight": "1.6", "indent": "0", "align": "left", "color": "#1D1D1F" },
+    "lead": { "size": "17px", "lineHeight": "1.6", "indent": "0", "color": "#86868B" },
+    "caption": { "size": "12px", "color": "#86868B", "align": "center" }
+  },
+  "components": {
+    "header": { "bg": "#FFFFFF", "color": "#1D1D1F", "padding": "48px 20px" },
+    "nav": { "bg": "#F5F5F7", "padding": "12px 0" },
+    "leadSection": { "bg": "#F5F5F7", "padding": "24px", "borderRadius": "12px" },
+    "blockquote": { "bg": "#F5F5F7", "padding": "20px 24px", "borderRadius": "12px", "border": "none", "quoteColor": "#007AFF" },
+    "contact": { "bg": "#F5F5F7", "padding": "20px", "borderRadius": "12px" },
+    "footer": { "borderTop": "1px solid #D2D2D7", "padding": "20px" },
+    "divider": { "height": "1px", "bg": "#D2D2D7" }
+  }
+}

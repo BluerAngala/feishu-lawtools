@@ -1,0 +1,36 @@
+{
+  "name": "sports",
+  "description": "运动活力风格 - 动感十足",
+  "source": "md2wechat-skill",
+  "api_theme": "sports",
+  "colors": {
+    "brand": "#D9480F",
+    "accent": "#F7931E",
+    "lead": "#E85D04",
+    "text": "#1A1A2E",
+    "secondary": "#4A4A6A",
+    "muted": "#7A7A9A",
+    "border": "#FFE5D9",
+    "bg": "#FFF5F0",
+    "surface": "#FFFFFF"
+  },
+  "typography": {
+    "title": { "size": "28px", "weight": "800", "align": "center", "color": "#FF6B35" },
+    "subtitle": { "size": "15px", "weight": "400", "align": "center", "color": "#4A4A6A" },
+    "h1": { "size": "24px", "weight": "700", "align": "left", "color": "#FF6B35", "marginTop": "28px", "marginBottom": "12px" },
+    "h2": { "size": "20px", "weight": "600", "align": "left", "color": "#E85D04", "marginTop": "22px", "marginBottom": "10px" },
+    "h3": { "size": "17px", "weight": "600", "align": "left", "color": "#FF6B35", "marginTop": "18px", "marginBottom": "8px" },
+    "paragraph": { "size": "16px", "lineHeight": "1.8", "indent": "0", "align": "justify", "color": "#1A1A2E" },
+    "lead": { "size": "15px", "lineHeight": "1.85", "indent": "0", "color": "#E85D04" },
+    "caption": { "size": "13px", "color": "#7A7A9A", "align": "center" }
+  },
+  "components": {
+    "header": { "bg": "#FF6B35", "color": "#FFFFFF", "padding": "40px 20px" },
+    "nav": { "bg": "#FFF5F0", "padding": "10px 0" },
+    "leadSection": { "bg": "#FFE5D9", "padding": "22px 20px", "borderRadius": "8px", "borderLeft": "4px solid #FF6B35" },
+    "blockquote": { "bg": "#FFF5F0", "padding": "20px 24px", "borderRadius": "8px", "border": "none", "borderLeft": "4px solid #F7931E", "quoteColor": "#FF6B35" },
+    "contact": { "bg": "#FFF5F0", "padding": "20px", "borderRadius": "8px", "borderLeft": "4px solid #FF6B35" },
+    "footer": { "borderTop": "1px solid #FFE5D9", "padding": "20px" },
+    "divider": { "height": "1px", "bg": "#FFE5D9" }
+  }
+}

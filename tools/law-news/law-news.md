@@ -54,7 +54,10 @@ scripts: [scripts/law-news.py]
 | `fetch-article` | 获取单篇全文正文，生成文章文档 | `.md` 文件路径 |
 | `compile` | 多篇文章按风格汇编为最终稿件 | `.md` 文件路径 |
 | `publish` | 发布 markdown 为飞书文档 | `✅ 飞书 URL` |
+| `publish-wechat` | 🔥 一键联动：抓取 → 汇编 → 公众号 HTML | `.md` + `.html` 路径 |
 | `list-cache` | 查看已缓存的数据 | 终端列表 |
+
+> `compile` 支持 `--wechat [theme]` 参数，在生成 markdown 的同时自动生成微信公众号 HTML。参见下方「公众号联动」章节。
 
 所有数据自动缓存到 `tools/law-news/cache/`，无需重复请求，随时可追溯核查。
 
@@ -78,13 +81,28 @@ tools/law-news/scripts/law-news.py compile \
   --title "法律资讯简报 2026-06-13"
 # ← tools/law-news/cache/exports/2026-06-13_法律资讯简报_2026-06-13.md
 
+# ③ 可选：汇编同时生成公众号 HTML
+tools/law-news/scripts/law-news.py compile \
+  --articles "ARTIxxx,ARTIyyy" \
+  --style 简报 \
+  --title "法律资讯简报 2026-06-13" \
+  --wechat spring-fresh
+# ← tools/law-news/cache/exports/2026-06-13_法律资讯简报.md
+# ← tools/law-news/cache/exports/2026-06-13_法律资讯简报_spring-fresh.html
+
 # ④ 发布到飞书（自动缩放配图、等比不变形）
 tools/law-news/scripts/law-news.py publish \
   tools/law-news/cache/exports/2026-06-13_法律资讯简报_2026-06-13.md \
   --title "法律资讯简报 2026-06-13" [--wiki <space_id>]
 # ← ✅ https://...
 
-# ⑤ 核查缓存
+# ⑤ 一键联动：抓取 → 汇编 → 公众号 HTML（2 条命令直达公众号）
+tools/law-news/scripts/law-news.py publish-wechat cctv-law \
+  --max 5 --theme spring-fresh --style 简报
+# ← tools/law-news/cache/exports/...md
+# ← tools/law-news/cache/exports/...html
+
+# ⑥ 核查缓存
 tools/law-news/scripts/law-news.py list-cache
 ```
 
@@ -349,19 +367,113 @@ tools/law-news/scripts/law-news.py publish "$news_path" \
 # ← ✅ https://...
 ```
 
+### 快捷路径：一条命令直达公众号
+
+如果不需要 AI 筛选，直接用 `publish-wechat` 一条命令跑完：
+
+```bash
+tools/law-news/scripts/law-news.py publish-wechat cctv-law \
+  --max 5 --theme spring-fresh --style 简报
+# ← tools/law-news/cache/exports/...md
+# ← tools/law-news/cache/exports/...html
+```
+
 ### AI 职责清单
 
 1. **运行 `fetch`** → `read` 返回的索引 `.md`，判断选哪些文章
 2. **运行 `fetch-article`** 获取选中文章的正文 `.md`
 3. **（可选）生成「律师说」评论**：参考 `lawyer-profile.json` 的 `style_prompt` 给每条文章写 1-2 句律师视角的解读，存为 JSON 文件
 4. **运行 `compile`** 指定文章 ID 列表和风格 → 脚本自动排版，返回稿件路径
-5. **运行 `publish`** 发布稿件路径到飞书
+5. **（可选）运行 `compile --wechat`** 同时生成微信公众号 HTML
+6. **运行 `publish`** 发布稿件路径到飞书
+
+> 快捷选项：不需要筛选时，一条 `publish-wechat` 代替步骤 1→2→4→5
 
 全程 AI **不需要**：
 - 拼接 markdown 格式（`compile` 完成）
 - 生成 XML（`publish` 完成）
 - 算图片缩放（`publish` 内置 `get_image_dimensions` 完成）
 - 管理缓存路径（脚本自动处理）
+
+---
+
+## 公众号联动
+
+`compile` 支持 `--wechat [theme]` 参数，在生成 markdown 稿件的同时，自动调用 `tools/md-to-wechat/scripts/cli.js` 生成微信公众号兼容的 HTML 文件。
+
+### 用法
+
+```bash
+# 汇编简报，同时生成 WeChat HTML（使用 spring-fresh 主题）
+tools/law-news/scripts/law-news.py compile \
+  --articles "ARTIxxx,ARTIyyy,ARTIzzz" \
+  --style 简报 \
+  --title "法律资讯简报 2026-06-13" \
+  --wechat spring-fresh
+# ← tools/law-news/cache/exports/2026-06-13_法律资讯简报.md
+# ← tools/law-news/cache/exports/2026-06-13_法律资讯简报_spring-fresh.html
+
+# 不指定主题，默认 legal
+--wechat
+# 等价于 --wechat legal
+```
+
+### 主题推荐
+
+| 文章类型 | 主题 |
+|----------|------|
+| 法律资讯简报 | `spring-fresh`（清新专业）、`legal`（权威商务） |
+| 深度法律分析 | `academic`（学术严谨）、`minimal`（简约） |
+| 行业动态 | `tech`（科技现代）、`warm`（温暖人文） |
+
+### 依赖
+
+`--wechat` 需要 `node` 可用。首次使用前检查：
+
+```bash
+node --version
+```
+
+如果不可用，请安装 Node.js >= 16：<https://nodejs.org>
+
+### 输出文件
+
+HTML 文件与 markdown 稿件在同一目录（`cache/exports/`），命名规则：`<原文件名>_<主题>.html`。AI 拿到路径后 `read` 该文件确认效果，然后全选复制到公众号编辑器即可。
+
+### 一键联动：publish-wechat
+
+如果不需要 AI 筛选文章，直接抓最新 N 条 → 汇编 → 生成公众号 HTML，一条命令搞定：
+
+```bash
+tools/law-news/scripts/law-news.py publish-wechat cctv-law \
+  --max 5 --theme spring-fresh --style 简报
+# ← tools/law-news/cache/exports/...md
+# ← tools/law-news/cache/exports/...html
+```
+
+**参数：**
+
+| 参数 | 说明 | 默认值 |
+|------|------|--------|
+| `source` | 信息源标识 | `cctv-law` |
+| `--max <n>` | 最大条数（最新 N 条） | `5` |
+| `--style <风格>` | 简报/深度/专题 | `简报` |
+| `--theme <主题>` | 公众号排版主题 | `legal` |
+
+**内部流程：**
+1. `fetch` 获取列表 → 2. `fetch-article` 自动抓取每篇全文（缓存命中跳过） → 3. `compile --wechat` 汇编 + 生成 HTML
+
+**输出（stdout）：**
+```
+tools/law-news/cache/exports/2026-06-13_央视网简报_2026-06-13.md
+tools/law-news/cache/exports/2026-06-13_央视网简报_2026-06-13_spring-fresh.html
+```
+
+> 无需 AI 判断的场景用这个（比如固定每天推一期简报）。需要筛选文章的场合，依然分步：`fetch` → AI 看索引 → `fetch-article` → `compile --wechat`。
+
+---
+
+> 更多用法（转换已有飞书文档、独立转换本地 markdown、查看所有主题）请参考 `tools/md-to-wechat/README.md`。
 
 ---
 
