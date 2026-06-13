@@ -73,12 +73,26 @@ cd feishu-lawtools
 
 各工具依赖汇总。AI agent 应在执行对应工具前置检查时确认依赖可用。
 
-| 工具 | 全局依赖 | 脚本语言 | 说明 |
-|------|----------|----------|------|
-| `law-import` | `lark-cli` | 无脚本（纯 AI 指令） | URL/文件 → 飞书文档 |
-| `law-news` | `lark-cli`, `python3` | Python（标准库） | 新闻抓取、排版、发布 |
-| `law-highlight` | `lark-cli` | 无脚本（纯 CLI 指令） | 正文标记 |
-| `law-annotate` | `lark-cli` | 无脚本（纯 AI 指令） | AI 批注 |
+| 工具 | 全局依赖 | 用户配置 | 脚本语言 | 说明 |
+|------|----------|----------|----------|------|
+| `law-import` | `lark-cli` | — | 无脚本（纯 AI 指令） | URL/文件 → 飞书文档 |
+| `law-news` | `lark-cli`, `python3` | `lawyer-profile.json`（可选） | Python（标准库） | 新闻抓取、排版、发布 |
+| `law-highlight` | `lark-cli` | — | 无脚本（纯 CLI 指令） | 正文标记 |
+| `law-annotate` | `lark-cli` | — | 无脚本（纯 AI 指令） | AI 批注 |
+
+> 「用户配置」列：某些工具有可选的个性化配置（如 `law-news` 的「律师说」评论档案），首次使用 AI 应提示用户 `cp` 示例配置并填写。
+
+## 首次运行
+
+每个工具按统一结构组织（`md + 脚本 + cache + .example.json + .json`），但部分工具有**用户配置**才完整工作：
+
+```bash
+# /law-news 第一次使用：复制并填写「律师说」评论档案
+cp tools/law-news/lawyer-profile.example.json tools/law-news/lawyer-profile.json
+# 然后编辑该 JSON，填入你的 label / signature / style_prompt
+```
+
+各工具的「首次使用」细节见对应 `tools/<name>/<name>.md` 文档开头。
 
 ### 安装方式
 

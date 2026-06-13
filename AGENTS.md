@@ -108,23 +108,37 @@ exit 1 — 失败
 
 **不要**把正文内容打到 stdout。正文写到文件，返回路径。
 
-#### 文件层级规范
+#### 文件层级规范（标准结构）
 
-每个脚本自带缓存目录，放在工具文件夹内，保持独立：
+每个 skill 都按统一结构组织，五个文件/目录缺一不可：
 
 ```
-tools/law-news/
-├── law-news.md
-├── scripts/law-news.py
-└── cache/                  ← 由 {NAME}_DIR 控制（默认 tools/<name>/cache/）
-    ├── raw/                ← fetch 原始响应（JSON，备查）
-    ├── articles/           ← fetch-article 结果（.json + .md）
-    └── exports/            ← 最终交付物（.md）
+tools/law-<name>/
+├── law-<name>.md                    ← skill 文档（人类可读 + AI 编排指令）
+├── scripts/
+│   └── law-<name>.py                ← 机械操作脚本（Python 标准库）
+├── cache/                           ← 工具自带缓存（git 忽略）
+│   ├── raw/                         ← fetch 原始响应（JSON，备查）
+│   ├── articles/                    ← 单篇数据（.json + .md）
+│   └── exports/                     ← 最终交付物（.md）
+└── <name>-profile.example.json     ← 用户配置示例（git 提交）
+└── <name>-profile.json             ← 用户实际配置（git 忽略，* 首次运行 cp）
 ```
+
+**五要素不可缺一**：
+
+| 要素 | 作用 |
+|------|------|
+| `law-<name>.md` | skill 文档，AI agent 读这个驱动工具 |
+| `scripts/law-<name>.py` | 抓取/解析/排版/发布的实现 |
+| `cache/` | 工具自带缓存，git 忽略，可追溯 |
+| `<name>-profile.example.json` | 用户配置**示例**，git 提交用于参考 |
+| `<name>-profile.json` | 用户实际配置（如「律师说」评论风格），git 忽略 |
 
 - 缓存根目录默认 `tools/<name>/cache/`，环境变量 `{NAME}_DIR` 可覆盖
-- `.gitignore` 中已排除 `cache/`
+- `.gitignore` 中已排除 `cache/` 和 `*-profile.json`（个人配置隐私）
 - `list-cache` 子命令展示所有缓存，支持按来源筛选
+- **首次使用**：skill 文档开头必须放「首次使用」章节，引导用户 cp 示例配置
 
 #### compile 约定
 

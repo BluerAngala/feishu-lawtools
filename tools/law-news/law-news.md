@@ -16,6 +16,26 @@ scripts: [scripts/law-news.py]
 
 ---
 
+## ⚠️ 首次使用：必读
+
+**`compile` 命令的「律师说」评论块需要一份个人档案配置。** 在使用前：
+
+1. 复制示例配置：
+   ```bash
+   cp tools/law-news/lawyer-profile.example.json tools/law-news/lawyer-profile.json
+   ```
+2. 编辑 `tools/law-news/lawyer-profile.json`，填你自己的：
+   - `label`：评论块标题（如「陈律师说」「XX 团队解读」）
+   - `signature`：简短署名（格式「姓名 · 律所」，如「陈恒 · XX 律师事务所」）
+   - `style_prompt`：风格提示词，**给 AI 自己看的**，告诉它写评论的角度、风格、不要写成什么
+3. 调用时传 `--lawyer-profile @tools/law-news/lawyer-profile.json`
+
+不传这个参数，「律师说」评论块依然能写（AI 自己生成内容），只是无署名 + 默认 label「律师说」。
+
+> 示例配置已用 `.gitignore` 排除个人档案，用户自己填的 `lawyer-profile.json` 不会被提交。`.example.json` 留作参考。
+
+---
+
 ## 设计理念
 
 **脚本做实事，AI 只做判断和编排。**
@@ -74,22 +94,24 @@ tools/law-news/scripts/law-news.py list-cache
 
 ```
 tools/law-news/
-├── law-news.md                    ← skill 文档
-├── scripts/law-news.py            ← Python 脚本（仅标准库）
-└── cache/                         ← 由 LAW_NEWS_DIR 控制（默认 tools/law-news/cache/）
-    ├── raw/
-    │   └── cctv-law/
-    │       └── 2026-06-13.json    ← fetch 原始 API 响应
-    ├── articles/
-    │   ├── ARTIxxx.json           ← fetch-article 原始 JSON
-    │   └── ARTIxxx.md             ← fetch-article 排版后 .md
-    └── exports/
-        ├── 2026-06-13_cctv-law_索引.md  ← fetch 生成的索引
-        └── 2026-06-13_法律资讯简报.md    ← compile 生成的稿件
+├── law-news.md                       ← skill 文档
+├── scripts/law-news.py               ← Python 脚本（仅标准库）
+├── cache/                            ← 由 LAW_NEWS_DIR 控制（默认 tools/law-news/cache/）
+│   ├── raw/
+│   │   └── cctv-law/
+│   │       └── 2026-06-13.json       ← fetch 原始 API 响应
+│   ├── articles/
+│   │   ├── ARTIxxx.json              ← fetch-article 原始 JSON
+│   │   └── ARTIxxx.md                ← fetch-article 排版后 .md
+│   └── exports/
+│       ├── 2026-06-13_cctv-law_索引.md  ← fetch 生成的索引
+│       └── 2026-06-13_法律资讯简报.md    ← compile 生成的稿件
+├── lawyer-profile.example.json       ← 用户配置示例（git 提交）
+└── lawyer-profile.json               ← 用户实际配置（git 忽略）
 ```
 
 - 缓存目录默认 `tools/law-news/cache/`，环境变量 `LAW_NEWS_DIR` 可覆盖
-- `.gitignore` 中已排除 `cache/`
+- `lawyer-profile.json` 在 `.gitignore` 排除，不会被提交
 - `list-cache` 随时查看所有缓存，支持按来源筛选
 
 ---
@@ -189,7 +211,67 @@ tools/law-news/
 - 标题是**可点击链接**（`<h1><a href="url">标题</a></h1>`）
 - 配图是**居中块**（飞书自动 `<img>` 块渲染）
 - 摘要紧跟图片（首 2 句 `。` `！` `？` 切分）
+- 可选：摘要下插入 `**律师说**` 评论（1-2 句律师角度解读，详见下一节）
 - 底部三项走**引用块样式**（`<blockquote>`），信息分类清晰
+
+---
+
+## 「律师说」评论（可选）
+
+为增强专业感，每条摘要下可加一段 1-2 句的「律师说」评论，AI 视角生成。
+
+### 1. 准备个人档案
+
+```bash
+cp tools/law-news/lawyer-profile.example.json tools/law-news/lawyer-profile.json
+# 编辑：填入你的姓名、律所、风格提示
+```
+
+`lawyer-profile.json` 字段：
+
+| 字段 | 必填 | 说明 |
+|------|------|------|
+| `label` | 否 | 评论块标题（默认「律师说」），如「陈律师说」 |
+| `signature` | 否 | 简短署名（格式「姓名 · 律所」），如「陈恒 · XX 律师事务所」 |
+| `style_prompt` | 否 | 风格提示词，**给 AI 自己看的**，告诉它写评论的角度和风格 |
+
+不传 `signature` 就不显示署名，只显示评论内容。点到即止，不带联系方式、不带服务介绍。
+
+### 2. 准备评论内容（JSON 文件）
+
+```json
+{
+  "ARTIQ0IPGdzmEUmdemWnY5nJ260613": "做私域带货的朋友注意：你以为朋友圈是私人分享，但只要涉及持续引流+获利，监管眼里就是经营行为。建议把营销素材先发我审一遍，能避开 90% 的坑。",
+  "ARTIxxx": "另一条评论……"
+}
+```
+
+### 3. 调用
+
+```bash
+python3 tools/law-news/scripts/law-news.py compile \
+  --articles "ARTIxxx,ARTIyyy" \
+  --style 简报 \
+  --lawyer-comments "@/tmp/comments.json" \
+  --lawyer-profile "@tools/law-news/lawyer-profile.json"
+```
+
+输出示例：
+
+```markdown
+正文摘要（首两句）
+
+**陈律师说**：做私域带货、朋友圈卖货的朋友注意……
+—— 陈恒 · XX 律师事务所
+
+> 日期：2026-06-13
+> 来源：央视网
+> 原文链接：[...]
+```
+
+- 评论 JSON 支持 inline 字符串：`--lawyer-comments '{"ID1":"...","ID2":"..."}'`
+- 配置文件同理：`@/path/to/file.json` 或 inline 字符串
+- **不传 `--lawyer-comments` 就不输出「律师说」块**，可选用
 
 ---
 
@@ -248,14 +330,20 @@ tools/law-news/scripts/law-news.py fetch-article "$url3"
 # ← tools/law-news/cache/articles/ARTIyyy.md
 # ← tools/law-news/cache/articles/ARTIzzz.md
 
-# ===== 第 3 步：汇编稿件 =====（脚本完成排版，AI 不拼接 markdown）
+# ===== 第 3 步（可选）：生成「律师说」评论 =====
+# AI 读自己配置风格 (tools/law-news/lawyer-profile.json) 和每篇正文
+# 输出 JSON 文件：{"ID1":"评论...","ID2":"评论..."}，写到 /tmp/comments.json
+
+# ===== 第 4 步：汇编稿件 =====（脚本完成排版，AI 不拼接 markdown）
 news_path=$(tools/law-news/scripts/law-news.py compile \
   --articles "ARTIxxx,ARTIyyy,ARTIzzz" \
   --style 简报 \
-  --title "法律资讯简报 $(date +%Y-%m-%d)")
+  --title "法律资讯简报 $(date +%Y-%m-%d)" \
+  --lawyer-comments "@/tmp/comments.json" \
+  --lawyer-profile "@tools/law-news/lawyer-profile.json")
 # ← tools/law-news/cache/exports/2026-06-13_法律资讯简报.md
 
-# ===== 第 4 步：发布到飞书 =====（自动处理配图缩放）
+# ===== 第 5 步：发布到飞书 =====（自动处理配图缩放）
 tools/law-news/scripts/law-news.py publish "$news_path" \
   --title "法律资讯简报 $(date +%Y-%m-%d)"
 # ← ✅ https://...
@@ -265,8 +353,9 @@ tools/law-news/scripts/law-news.py publish "$news_path" \
 
 1. **运行 `fetch`** → `read` 返回的索引 `.md`，判断选哪些文章
 2. **运行 `fetch-article`** 获取选中文章的正文 `.md`
-3. **运行 `compile`** 指定文章 ID 列表和风格 → 脚本自动排版，返回稿件路径
-4. **运行 `publish`** 发布稿件路径到飞书
+3. **（可选）生成「律师说」评论**：参考 `lawyer-profile.json` 的 `style_prompt` 给每条文章写 1-2 句律师视角的解读，存为 JSON 文件
+4. **运行 `compile`** 指定文章 ID 列表和风格 → 脚本自动排版，返回稿件路径
+5. **运行 `publish`** 发布稿件路径到飞书
 
 全程 AI **不需要**：
 - 拼接 markdown 格式（`compile` 完成）

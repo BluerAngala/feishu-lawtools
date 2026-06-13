@@ -387,7 +387,7 @@ def fetch_article_cmd(url):
 
 # ===== compile: 多篇文章汇编 → 最终稿件 .md =====
 
-def compile_newsletter(articles_csv, style='简报', title=None, lawyer_comments=None):
+def compile_newsletter(articles_csv, style='简报', title=None, lawyer_comments=None, lawyer_profile=None):
     if not articles_csv:
         die("ERROR: --articles is required")
     if not title:
@@ -409,6 +409,25 @@ def compile_newsletter(articles_csv, style='简报', title=None, lawyer_comments
                 comments = json.loads(lawyer_comments)
             except json.JSONDecodeError as e:
                 die(f"ERROR: --lawyer-comments must be valid JSON: {e}")
+
+    # Parse optional lawyer profile (label, signature, style_prompt)
+    profile = {'label': '律师说', 'signature': '', 'style_prompt': ''}
+    if lawyer_profile:
+        if lawyer_profile.startswith('@'):
+            file_path = lawyer_profile[1:]
+            try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    profile.update(json.load(f))
+            except (OSError, json.JSONDecodeError) as e:
+                die(f"ERROR: failed to load --lawyer-profile from {file_path}: {e}")
+        else:
+            try:
+                profile.update(json.loads(lawyer_profile))
+            except json.JSONDecodeError as e:
+                die(f"ERROR: --lawyer-profile must be valid JSON: {e}")
+
+    lawyer_label = profile.get('label') or '律师说'
+    lawyer_sig_line = f"—— {profile['signature']}" if profile.get('signature') else ''
 
     cache_dir = get_cache_dir()
     exports_dir = os.path.join(cache_dir, 'exports')
@@ -479,10 +498,11 @@ def compile_newsletter(articles_csv, style='简报', title=None, lawyer_comments
             ])
             # Optional lawyer insight (1-2 sentences from a legal professional's view)
             if aid in comments and comments[aid].strip():
-                lines.extend([
-                    f'**律师说**：{comments[aid].strip()}',
-                    '',
-                ])
+                comment_text = comments[aid].strip()
+                lawyer_block = [f'**{lawyer_label}**：{comment_text}']
+                if lawyer_sig_line:
+                    lawyer_block.append(lawyer_sig_line)
+                lines.extend(lawyer_block + [''])
             lines.extend([
                 f'> 日期：{date_text}',
                 f'> 来源：{source_name}',
@@ -706,6 +726,7 @@ def main():
         style = '简报'
         title = None
         lawyer_comments = None
+        lawyer_profile = None
         i = 2
         while i < len(sys.argv):
             if sys.argv[i] == '--articles' and i + 1 < len(sys.argv):
@@ -720,9 +741,12 @@ def main():
             elif sys.argv[i] == '--lawyer-comments' and i + 1 < len(sys.argv):
                 lawyer_comments = sys.argv[i + 1]
                 i += 2
+            elif sys.argv[i] == '--lawyer-profile' and i + 1 < len(sys.argv):
+                lawyer_profile = sys.argv[i + 1]
+                i += 2
             else:
                 i += 1
-        print(compile_newsletter(articles_csv, style, title, lawyer_comments))
+        print(compile_newsletter(articles_csv, style, title, lawyer_comments, lawyer_profile))
 
     elif cmd == 'publish':
         if len(sys.argv) < 3:

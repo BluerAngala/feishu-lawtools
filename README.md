@@ -224,22 +224,24 @@ https://lawyerch.feishu.cn/docx/xxx#doxcn123456
 
 ```
 feishu-lawtools/
-├── SKILL.md                     ← 总调度：元信息、前置检查、流程图、工具索引
-├── AGENTS.md                    ← agent 操作指南 + 开发规范
-├── README.md                    ← 本文件（人类可读的说明文档）
-├── package.json                 ← npm 包信息
-├── lib/                         ← 共享脚本库
-└── tools/                       ← 所有 skill 目录
+├── SKILL.md                                  ← 总调度：元信息、前置检查、流程图、工具索引
+├── AGENTS.md                                 ← agent 操作指南 + 开发规范
+├── README.md                                 ← 本文件（人类可读的说明文档）
+├── package.json                              ← npm 包信息
+├── lib/                                      ← 共享脚本库
+└── tools/                                    ← 所有 skill 目录（标准结构）
     ├── law-import/
     │   └── law-import.md
     ├── law-news/
-    │   ├── law-news.md          ← 资讯获取+汇编+发布工具
+    │   ├── law-news.md                       ← skill 文档
     │   ├── scripts/
-    │   │   └── law-news.py      ← Python 脚本（仅标准库）
-    │   └── cache/               ← 工具自带缓存（git 忽略）
-    │       ├── raw/             ← fetch 原始 JSON
-    │       ├── articles/        ← 单篇正文（.json + .md）
-    │       └── exports/         ← 汇编稿件（.md）
+    │   │   └── law-news.py                   ← 机械操作脚本
+    │   ├── cache/                            ← 工具自带缓存（git 忽略）
+    │   │   ├── raw/                          ← fetch 原始 JSON
+    │   │   ├── articles/                     ← 单篇正文（.json + .md）
+    │   │   └── exports/                      ← 汇编稿件（.md）
+    │   ├── lawyer-profile.example.json       ← 用户配置示例（git 提交）
+    │   └── lawyer-profile.json               ← 用户实际配置（git 忽略）
     ├── law-highlight/
     │   └── law-highlight.md
     └── law-annotate/
@@ -248,10 +250,20 @@ feishu-lawtools/
 
 ### 结构规则
 
-- **所有 skill 收在 `tools/` 下**：根目录只放顶层配置，加再多 skill 也不乱
-- **每个 skill 独立目录**：`tools/law-<name>/` 下辖说明文档 + 可选 `scripts/`
-- **工具自包含缓存**：`tools/<name>/cache/` 内置 `raw/` `articles/` `exports/`，按 `{NAME}_DIR` 可覆盖
-- **共享逻辑放 `lib/`**：多个 skill 共用的函数抽到 `lib/<name>.py`（或 `.sh`）
+每个 skill 目录都按统一标准结构组织，**五要素不可缺一**：
+
+| 要素 | 作用 |
+|------|------|
+| `law-<name>.md` | skill 文档，AI agent 读这个驱动工具 |
+| `scripts/law-<name>.py` | 抓取 / 解析 / 排版 / 缓存 / 存盘 / 发布的实现 |
+| `cache/` | 工具自带缓存（`raw/` + `articles/` + `exports/`），git 忽略 |
+| `<name>-profile.example.json` | 用户配置**示例**，git 提交用于参考 |
+| `<name>-profile.json` | 用户实际配置（如「律师说」评论风格），git 忽略 |
+
+- 缓存根目录默认 `tools/<name>/cache/`，环境变量 `{NAME}_DIR` 可覆盖
+- 工具自包含，删除整个 `tools/<name>/` 不影响其他工具
+- 共享逻辑放 `lib/`：多个 skill 共用的函数抽到 `lib/<name>.py`（或 `.sh`）
+- **首次使用**：skill 文档开头放「首次使用」章节，引导用户 `cp` 示例配置
 
 ---
 
@@ -277,12 +289,21 @@ feishu-lawtools/
 
 ### 新增一个命令
 
+按标准五要素结构搭建：
+
 ```bash
-mkdir -p tools/law-summarize
-# 创建 tools/law-summarize/law-summarize.md
-# 在 SKILL.md 工具索引加一行
-# 如有机械操作，在 tools/law-summarize/scripts/ 下加 Python 脚本
+mkdir -p tools/law-summarize/scripts
+touch tools/law-summarize/law-summarize.md
+touch tools/law-summarize/scripts/law-summarize.py
+chmod +x tools/law-summarize/scripts/law-summarize.py
+# 如果有用户配置：写一份示例 + .gitignore 中排除实际配置文件
+touch tools/law-summarize/law-summarize-profile.example.json
 ```
+
+1. 在 `tools/law-summarize/law-summarize.md` 写 skill 文档（**开头必须有「首次使用」章节**）
+2. 在 `SKILL.md` 工具索引加一行
+3. Python 脚本实现 `fetch` / `compile` / `publish` / `list-cache` 子命令
+4. 缓存自动落到 `tools/law-summarize/cache/`
 
 SKILL.md 工具索引格式：
 ```markdown
@@ -298,6 +319,8 @@ SKILL.md 工具索引格式：
 5. **脚本化**：机械操作（API/格式转换/图片处理）写脚本，AI 只做内容生成
 6. **跨平台**：Python 脚本用 `python3` + 仅标准库，Windows/macOS/Linux 三端可跑
 7. **缓存可追溯**：数据存工具自带 `cache/`，`.gitignore` 已排除
+8. **五要素齐备**：每个 skill 都按 `md + 脚本 + cache + .example.json + .json` 模板组织
+9. **配置隐私**：用户个人配置 `*.json` 必须 `.gitignore` 排除
 
 ---
 
@@ -338,6 +361,30 @@ AI 会自动跑完 `fetch` → `fetch-article` → `compile` → `publish` 全�
 ### Q: `law-news` 配图大小不一致怎么办？
 
 `publish` 步骤已内置自适应：先用纯标准库读图片 header 拿到原宽高，再算 `scale = 600 / 原宽`，所以无论原图大小，最终显示都是统一的视觉尺寸（飞书 `scale` 支持 > 1.0 放大）。
+
+### Q: 「律师说」评论怎么改成我自己的？
+
+复制示例配置，编辑 `tools/law-news/lawyer-profile.json`：
+
+```bash
+cp tools/law-news/lawyer-profile.example.json tools/law-news/lawyer-profile.json
+```
+
+三个字段：
+
+- `label`：评论块标题（如「陈律师说」）
+- `signature`：简短署名（格式「姓名 · 律所」）
+- `style_prompt`：风格提示词，**给 AI 自己看**，告诉它写评论的角度和风格
+
+使用时传：
+
+```bash
+python3 tools/law-news/scripts/law-news.py compile \
+  --lawyer-comments "@/tmp/comments.json" \
+  --lawyer-profile "@tools/law-news/lawyer-profile.json"
+```
+
+`lawyer-profile.json` 已在 `.gitignore` 排除，不会被提交。
 
 ---
 
