@@ -1,7 +1,7 @@
 ---
 name: feishu-lawtools
 version: 1.2.0
-description: "飞书法律工具箱。法律条文导入飞书在线文档、法律资讯获取、AI划重点标记、AI批注解读、Markdown/飞书文档→公众号排版。触发方式：/law-import、/law-news、/law-highlight、/law-annotate、/法律导入、/法律资讯、/划重点、/法律批注、/公众号"
+description: "飞书法律工具箱。法律条文导入飞书在线文档、法律资讯获取、AI划重点标记、AI批注解读、Markdown/飞书文档→公众号排版、微信公众号草稿推送。触发方式：/law-import、/law-news、/law-highlight、/law-annotate、/法律导入、/法律资讯、/划重点、/法律批注、/公众号、/微信草稿"
 compatibility: "pi, Claude Code, Codex, OpenCode - 任何能执行命令和调用 lark-cli 的 AI agent"
 metadata:
   requires:
@@ -18,6 +18,7 @@ metadata:
     - tools/law-news/law-news.md
     - tools/law-highlight/law-highlight.md
     - tools/law-annotate/law-annotate.md
+    - tools/wechat-draft/wechat-draft.md
 
 ---
 
@@ -94,6 +95,7 @@ cd feishu-lawtools
 # /law-news 第一次使用：复制并填写「律师说」评论档案
 cp tools/law-news/lawyer-profile.example.json tools/law-news/lawyer-profile.json
 # 然后编辑该 JSON，填入你的 label / signature / style_prompt
+# ⚠️ style_prompt 必须包含划重点要求——核心关键词、法条、处罚后果用 **加粗** 标记（渲染后为红色加粗）
 ```
 
 各工具的「首次使用」细节见对应 `tools/<name>/<name>.md` 文档开头。

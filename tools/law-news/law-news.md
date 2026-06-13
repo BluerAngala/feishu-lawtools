@@ -27,7 +27,7 @@ scripts: [scripts/law-news.py]
 2. 编辑 `tools/law-news/lawyer-profile.json`，填你自己的：
    - `label`：评论块标题（如「陈律师说」「XX 团队解读」）
    - `signature`：简短署名（格式「姓名 · 律所」，如「陈恒 · XX 律师事务所」）
-   - `style_prompt`：风格提示词，**给 AI 自己看的**，告诉它写评论的角度、风格、不要写成什么
+   - `style_prompt`：风格提示词，**给 AI 自己看的**，告诉它写评论的角度、风格、不要写成什么。**重要：必须包含划重点要求**——核心关键词、法条、处罚后果用 `**加粗**` 标记，渲染后为红色加粗
 3. 调用时传 `--lawyer-profile @tools/law-news/lawyer-profile.json`
 
 不传这个参数，「律师说」评论块依然能写（AI 自己生成内容），只是无署名 + 默认 label「律师说」。
@@ -251,7 +251,7 @@ cp tools/law-news/lawyer-profile.example.json tools/law-news/lawyer-profile.json
 |------|------|------|
 | `label` | 否 | 评论块标题（默认「律师说」），如「陈律师说」 |
 | `signature` | 否 | 简短署名（格式「姓名 · 律所」），如「陈恒 · XX 律师事务所」 |
-| `style_prompt` | 否 | 风格提示词，**给 AI 自己看的**，告诉它写评论的角度和风格 |
+| `style_prompt` | 否 | 风格提示词，**给 AI 自己看的**，告诉它写评论的角度和风格。**必须包含划重点要求**——核心信息用 `**加粗**` 标记 |
 
 不传 `signature` 就不显示署名，只显示评论内容。点到即止，不带联系方式、不带服务介绍。
 
