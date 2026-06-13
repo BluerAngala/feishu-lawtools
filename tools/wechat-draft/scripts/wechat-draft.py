@@ -110,11 +110,28 @@ def print_setup_guide():
     print(file=sys.stderr)
 
 
-def require_token_url(token_url):
-    """检查 token_url 是否已配置，没有则打印指引并退出"""
+def resolve_token_source(args, config):
+    """
+    确定 token 获取方式，返回可调用的函数。
+    优先顺序：--token-url > config.token_url > config.appid+secret > 环境变量
+    """
+    token_url = (args.token_url
+                 or config.get('token_url')
+                 or os.environ.get('WECHAT_TOKEN_URL'))
     if token_url:
-        return token_url
-    print("❌ 未配置 --token-url", file=sys.stderr)
+        return lambda: get_access_token(token_url)
+
+    appid = config.get('appid') or os.environ.get('WECHAT_APPID')
+    secret = config.get('secret') or os.environ.get('WECHAT_SECRET')
+    if appid and secret:
+        return lambda: get_token_from_wechat(appid, secret)
+
+    print("❌ 未配置 token 获取方式", file=sys.stderr)
+    print("   请通过以下任一方式配置：", file=sys.stderr)
+    print("   ① --token-url 'https://你的token接口'（付费接口/云函数）", file=sys.stderr)
+    print("   ② 配置文件中填写 appid + secret（脚本直连微信 API）", file=sys.stderr)
+    print("   ③ 环境变量 WECHAT_TOKEN_URL 或 WECHAT_APPID + WECHAT_SECRET", file=sys.stderr)
+    print(file=sys.stderr)
     print_setup_guide()
     sys.exit(1)
 
@@ -183,6 +200,36 @@ def get_access_token(token_url):
         sys.exit(1)
 
     return token
+
+
+def get_token_from_wechat(appid, secret):
+    """直接调用微信 API 获取 access_token（无需部署中间接口）"""
+    url = (
+        "https://api.weixin.qq.com/cgi-bin/token"
+        f"?grant_type=client_credential&appid={appid}&secret={secret}"
+    )
+    r = safe_get(url)
+    if r is None:
+        print("❌ 获取 token 失败，请检查网络或 IP 白名单", file=sys.stderr)
+        print(f"   详细指引见: {SETUP_IMAGE}", file=sys.stderr)
+        sys.exit(1)
+
+    data = r.json()
+    if 'access_token' in data:
+        return data['access_token']
+
+    errcode = data.get('errcode')
+    errmsg = data.get('errmsg', '')
+    if errcode == 40001:
+        print(f"❌ AppSecret 错误，请到公众号后台重新获取: {errmsg}", file=sys.stderr)
+    elif errcode == 40013:
+        print(f"❌ AppID 错误: {errmsg}", file=sys.stderr)
+    elif errcode == 40164:
+        print(f"❌ IP 未加入白名单，请在公众号后台配置: {errmsg}", file=sys.stderr)
+        print(f"   详细指引见: {SETUP_IMAGE}", file=sys.stderr)
+    else:
+        print(f"❌ 微信 API 返回错误 [{errcode}]: {errmsg}", file=sys.stderr)
+    sys.exit(1)
 
 
 # ============================================================
@@ -400,7 +447,7 @@ def cmd_publish_draft(args):
             with open(config_path, 'r', encoding='utf-8') as f:
                 config = json.load(f)
 
-    token_url = require_token_url(args.token_url or config.get('token_url') or os.environ.get('WECHAT_TOKEN_URL'))
+    get_token = resolve_token_source(args, config)
 
     # 2. 读取 HTML
     html_path = args.html
@@ -413,7 +460,7 @@ def cmd_publish_draft(args):
 
     # 3. 获取 access_token
     print("🔑 获取 access_token...")
-    access_token = get_access_token(token_url)
+    access_token = get_token()
     print(f"✅ token 获取成功 ({access_token[:8]}...)")
 
     # 4. 提取图片 URL
@@ -495,20 +542,11 @@ def cmd_publish_draft(args):
 # 辅助命令
 # ============================================================
 
-def _resolve_token_url(args, config):
-    """统一获取 token_url，未配置时打印指引"""
-    return require_token_url(
-        args.token_url
-        or config.get('token_url')
-        or os.environ.get('WECHAT_TOKEN_URL')
-    )
-
-
 def cmd_list_drafts(args):
     """查看草稿列表"""
     config = _load_config(args.config)
-    token_url = _resolve_token_url(args, config)
-    access_token = get_access_token(token_url)
+    get_token = resolve_token_source(args, config)
+    access_token = get_token()
 
     data = get_draft_list(access_token, offset=args.offset, count=args.count, no_content=1)
     if data.get('errcode', 0) != 0:
@@ -536,8 +574,8 @@ def cmd_list_drafts(args):
 def cmd_delete_draft(args):
     """删除草稿"""
     config = _load_config(args.config)
-    token_url = _resolve_token_url(args, config)
-    access_token = get_access_token(token_url)
+    get_token = resolve_token_source(args, config)
+    access_token = get_token()
 
     data = delete_draft(access_token, args.media_id)
     if data.get('errcode', 0) == 0:
@@ -549,9 +587,9 @@ def cmd_delete_draft(args):
 def cmd_test_token(args):
     """测试 token 获取"""
     config = _load_config(args.config)
-    token_url = _resolve_token_url(args, config)
+    get_token = resolve_token_source(args, config)
     print("🔑 测试获取 access_token...")
-    token = get_access_token(token_url)
+    token = get_token()
     print(f"✅ 成功！token: {token[:12]}...({len(token)} chars)")
 
 

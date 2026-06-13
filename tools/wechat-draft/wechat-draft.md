@@ -32,34 +32,43 @@ python3 tools/wechat-draft/scripts/wechat-draft.py show-setup
 添加你部署 token 接口的服务器公网 IP。
 > 📸 详细操作截图见 `tools/wechat-draft/联系我.jpg`
 
-**④ 部署 access_token 接口**
-你需要一个返回 `{"access_token": "..."}` 的 HTTP 接口。
-可以用云函数简单实现：
+**④ 配置 token 获取方式（二选一）**
 
-```python
-# 示例：Cloud Function 或你自己的服务器
-def handle(request):
-    appid = request.args['appid']
-    secret = request.args['secret']
-    # 调用微信 API 获取 token
-    # return {"access_token": "xxx"}
+**方式 A：直连微信 API（推荐）**
+在配置文件中填写 `appid` + `secret`，脚本直连微信接口获取 token，无需额外部署。
+
+```bash
+cp tools/wechat-draft/wechat-draft.config.example.json tools/wechat-draft/wechat-draft.config.json
+# 编辑 wechat-draft.config.json，填写你的 appid 和 secret
 ```
 
-**⑤ 配置 token_url**
+```json
+{
+  "appid": "wx1234567890abcdef",
+  "secret": "你的AppSecret"
+}
+```
+
+**方式 B：独立 token 接口（付费/中间件场景）**
+部署一个返回 `{"access_token": "..."}` 的 HTTP 接口，通过 `token_url` 指定。
+
 ```bash
-# 方式一：命令行传入
+# 命令行
 python3 tools/wechat-draft/scripts/wechat-draft.py test-token \
-  --token-url "https://你的域名/api/getToken?appid=...&secret=..."
+  --token-url "https://你的域名/getToken"
 
-# 方式二：配置文件（推荐）
-cp tools/wechat-draft/wechat-draft.config.example.json tools/wechat-draft/wechat-draft.config.json
-# 编辑 wechat-draft.config.json，填入你的 token_url
-python3 tools/wechat-draft/scripts/wechat-draft.py test-token \
-  --config @tools/wechat-draft/wechat-draft.config.json
+# 或配置文件
+{
+  "token_url": "https://你的域名/getToken"
+}
+```
 
-# 方式三：环境变量
+**方式三：环境变量**
+```bash
 export WECHAT_TOKEN_URL="https://..."
-python3 tools/wechat-draft/scripts/wechat-draft.py test-token
+# 或
+export WECHAT_APPID="wx..."
+export WECHAT_SECRET="..."
 ```
 
 ---
@@ -126,13 +135,22 @@ python3 tools/wechat-draft/scripts/wechat-draft.py publish-draft \
 cp tools/wechat-draft/wechat-draft.config.example.json tools/wechat-draft/wechat-draft.config.json
 ```
 
-编辑 `wechat-draft.config.json`：
+编辑 `wechat-draft.config.json`，两种方式任选其一：
 
 ```json
 {
-  "token_url": "https://你的域名/api/getToken?appid=APPID&secret=SECRET",
-  "author": "作者名",
-  "cover_image": "https://example.com/cover.jpg"
+  "_note": "方式A: 直连微信 API（推荐）",
+  "appid": "wx1234567890abcdef",
+  "secret": "你的AppSecret",
+  "author": "作者名"
+}
+```
+
+```json
+{
+  "_note": "方式B: 独立 token 接口",
+  "token_url": "https://你的域名/getToken",
+  "author": "作者名"
 }
 ```
 

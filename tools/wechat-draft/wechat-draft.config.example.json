@@ -1,7 +1,14 @@
 {
-  "_note": "wechat-draft 配置文件。首次使用先 cp 再填写。",
-  "token_url": "https://your-domain.com/api/getToken?appid=YOUR_APPID&secret=YOUR_APPSECRET",
-  "author": "你的名字",
-  "cover_image": "https://example.com/default-cover.jpg",
+  "_note": [
+    "wechat-draft 配置示例。首次使用先 cp 再填写。",
+    "两种 token 获取方式任选其一：",
+    "  方式 A（推荐）: 填写 appid + secret，脚本直连微信 API",
+    "  方式 B: 填写 token_url（部署独立中间接口/付费场景）"
+  ],
+  "token_url": "",
+  "appid": "你的微信公众号 AppID",
+  "secret": "你的微信公众号 AppSecret",
+  "author": "作者名",
+  "cover_image": "https://example.com/cover.jpg",
   "digest": ""
 }
