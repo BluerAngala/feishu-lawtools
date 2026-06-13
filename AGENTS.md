@@ -8,7 +8,7 @@
 - 入口：`SKILL.md`（元信息、前置检查、流程图、工具索引）
 - 子工具：`tools/law-import/law-import.md`、`tools/law-news/law-news.md`、`tools/law-highlight/law-highlight.md`、`tools/law-annotate/law-annotate.md`
 - 机械操作脚本：`tools/law-news/scripts/law-news.py`（Python），降低 token 消耗
-- **项目级开发工具**（不进 npm 包）：`.agents/skill-audit/` 项目级审计脚本
+- **项目级开发工具**（不进 npm 包）：`.agents/skills/skill-audit/` 项目级审计脚本（pi）/ `.opencode/skills/skill-audit/`（opencode）
 - 无 `package.json` scripts，无 CI，无 linter，无 typecheck
 
 ## 前置检查（每次操作前必做）

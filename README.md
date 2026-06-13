@@ -230,9 +230,15 @@ feishu-lawtools/
 ├── package.json                              ← npm 包信息
 ├── lib/                                      ← 共享脚本库
 ├── .agents/                                  ← 项目级开发工具（不进 npm 包）
-│   └── skill-audit/                          ← 工具规范审计
-│       ├── skill-audit.md
-│       └── scripts/audit.py
+│   └── skills/
+│       └── skill-audit/                      ← 工具规范审计（pi 自动加载）
+│           ├── SKILL.md
+│           └── scripts/audit.py
+├── .opencode/                                ← opencode 项目技能目录（桥接至 .agents/skills/）
+│   ├── rules.md                              ← opencode 项目开发规范
+│   └── skills/
+│       └── skill-audit -> ../../.agents/skills/skill-audit/
+├── CLAUDE.md -> AGENTS.md                    ← 通用项目规则入口（软链）
 └── tools/                                    ← 分发给最终用户的 skill（标准结构）
     ├── law-import/
     │   └── law-import.md
