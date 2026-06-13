@@ -229,7 +229,11 @@ feishu-lawtools/
 ├── README.md                                 ← 本文件（人类可读的说明文档）
 ├── package.json                              ← npm 包信息
 ├── lib/                                      ← 共享脚本库
-└── tools/                                    ← 所有 skill 目录（标准结构）
+├── .agents/                                  ← 项目级开发工具（不进 npm 包）
+│   └── skill-audit/                          ← 工具规范审计
+│       ├── skill-audit.md
+│       └── scripts/audit.py
+└── tools/                                    ← 分发给最终用户的 skill（标准结构）
     ├── law-import/
     │   └── law-import.md
     ├── law-news/

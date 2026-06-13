@@ -1,6 +1,6 @@
 ---
 name: feishu-lawtools
-version: 1.1.0
+version: 1.2.0
 description: "飞书法律工具箱。法律条文导入飞书在线文档、法律资讯获取、AI划重点标记、AI批注解读。触发方式：/law-import、/law-news、/law-highlight、/law-annotate、/法律导入、/法律资讯、/划重点、/法律批注"
 compatibility: "pi, Claude Code, Codex, OpenCode - 任何能执行命令和调用 lark-cli 的 AI agent"
 metadata:
