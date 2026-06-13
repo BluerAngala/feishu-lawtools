@@ -20,7 +20,7 @@ scripts: [scripts/law-news.py]
 
 **脚本做实事，AI 只做判断和编排。**
 
-- 脚本负责：抓取 → 解析 → 缓存 → 排版 → 存盘
+- 脚本负责：抓取 → 解析 → 缓存 → 排版 → 存盘 → 配图尺寸自适应
 - AI 负责：浏览索引 → 判断选哪些 → 指定风格 → 触发发布
 - 所有交付物是 **文件路径**，AI `read` 即可，无需在上下文中拼接 markdown/XML
 
@@ -58,11 +58,14 @@ tools/law-news/scripts/law-news.py compile \
   --title "法律资讯简报 2026-06-13"
 # ← tools/law-news/cache/exports/2026-06-13_法律资讯简报_2026-06-13.md
 
-# ④ 发布到飞书
+# ④ 发布到飞书（自动缩放配图、等比不变形）
 tools/law-news/scripts/law-news.py publish \
   tools/law-news/cache/exports/2026-06-13_法律资讯简报_2026-06-13.md \
   --title "法律资讯简报 2026-06-13" [--wiki <space_id>]
 # ← ✅ https://...
+
+# ⑤ 核查缓存
+tools/law-news/scripts/law-news.py list-cache
 ```
 
 ---
@@ -72,8 +75,8 @@ tools/law-news/scripts/law-news.py publish \
 ```
 tools/law-news/
 ├── law-news.md                    ← skill 文档
-├── scripts/law-news.py            ← 脚本
-└── cache/                         ← 由 LAW_NEWS_DIR 控制
+├── scripts/law-news.py            ← Python 脚本（仅标准库）
+└── cache/                         ← 由 LAW_NEWS_DIR 控制（默认 tools/law-news/cache/）
     ├── raw/
     │   └── cctv-law/
     │       └── 2026-06-13.json    ← fetch 原始 API 响应
@@ -86,7 +89,8 @@ tools/law-news/
 ```
 
 - 缓存目录默认 `tools/law-news/cache/`，环境变量 `LAW_NEWS_DIR` 可覆盖
-- `list-cache` 随时查看所有缓存
+- `.gitignore` 中已排除 `cache/`
+- `list-cache` 随时查看所有缓存，支持按来源筛选
 
 ---
 
@@ -135,7 +139,8 @@ tools/law-news/
 | `date` | string | 发布日期（URL 提取） |
 | `content` | string | 纯净正文，**远多于 brief**，典型 800-1700 字 |
 | `content_html` | string | 原始 HTML（备查） |
-| `images` | string[] | 正文内嵌图片 URL |
+| `images` | string[] | 正文内嵌图片 URL（央视网正文图片通常为空，缩略图走 `image`） |
+| `image` | string | 资讯列表中的主图（从 raw 缓存查找回填） |
 | `keywords` | string[] | 关键词 |
 | `cached_at` | string | 缓存时间 |
 
@@ -163,9 +168,65 @@ tools/law-news/
 
 | 风格 | 说明 |
 |------|------|
-| **简报** | 每条 1-2 段 + 日期 + 核心要点。适合日常推送 |
-| **深度** | 全文保留 + 编者按。适合重要判例/法规解读 |
-| **专题** | 文章按顺序排列，每篇完整保留。适合系列报道 |
+| **简报** | 每条结构：标题（点击跳转原文）→ 配图 → 摘要（前两句）→ 引用块（日期/来源/原文链接） |
+| **深度** | 全文保留，文章间以 `---` 分隔 |
+| **专题** | 文章按顺序排列，每篇完整保留 |
+
+### 简报输出结构（已实测验证）
+
+```markdown
+## [1. 标题](原文链接)
+
+![](配图URL)
+
+正文摘要（首两句）
+
+> 日期：2026-06-13
+> 来源：央视网
+> 原文链接：[https://news.cctv.com/...](原文URL)
+```
+
+- 标题是**可点击链接**（`<h1><a href="url">标题</a></h1>`）
+- 配图是**居中块**（飞书自动 `<img>` 块渲染）
+- 摘要紧跟图片（首 2 句 `。` `！` `？` 切分）
+- 底部三项走**引用块样式**（`<blockquote>`），信息分类清晰
+
+---
+
+## 配图尺寸自适应
+
+**关键问题**：央视网图片宽高不一（实测 273×154 到 1024×576），用固定 `width`/`height` 飞书会**忽略**（标准化为 `scale`）。
+
+**解决方案**：`publish` 时先用纯标准库读 PNG/JPEG/GIF/WebP 的 header 拿到原宽高，再计算 `scale = 600 / orig_w`（可超过 1.0），输出 `<img scale="..." href="..."/>`。
+
+```xml
+<!-- 332px 宽小图：放大到 600px，scale=1.81 -->
+<img scale="1.8072" href="https://..." />
+
+<!-- 1024px 宽大图：缩到 600px，scale=0.59 -->
+<img scale="0.5859" href="https://..." />
+```
+
+- 飞书自动抓取 URL 上传到自家 CDN
+- `scale` 支持 > 1.0（实测可用），小图也能放大到统一视觉尺寸
+- 结果：**多图视觉等大、不变形、不模糊**
+
+---
+
+## 飞书简化 XML 转换（publish 内部）
+
+| 源（markdown） | 目标（XML） | 行为 |
+|---------------|------------|------|
+| `## [标题](url)` | `<h1><a href="url">标题</a></h1>` | 可点击标题 |
+| `## 标题` | `<h1>标题</h1>` | 普通标题 |
+| `### 标题` | `<h2>标题</h2>` | 二级标题 |
+| `![](url)` / 纯 URL 图片行 | `<img scale="..." href="url"/>` | 自动上传 + 自适应 |
+| `> 单行` / `> 多行` | `<blockquote><p>...</p>...</blockquote>` | 块级引用 |
+| `**粗体**` | `<b>粗体</b>` | 内联粗体 |
+| `[文本](url)` | `<a href="url">文本</a>` | 内联链接 |
+| `*斜体*` | `（删除标记）` | 飞书简化 XML 不支持斜体 |
+| `---` | （空行） | 飞书无水平线，去掉 |
+| `# 标题` | （跳过） | 文档标题已通过 `--title` 传递 |
 
 ---
 
@@ -176,23 +237,25 @@ tools/law-news/
 fetch_path=$(tools/law-news/scripts/law-news.py fetch cctv-law --days 3)
 # ← tools/law-news/cache/exports/2026-06-13_cctv-law_索引.md
 
-# AI read 该文件，浏览标题和摘要，选出有价值的 2-3 条
-# → 选中: url1, url2
+# AI read 该文件，浏览标题和摘要，选出有价值的条目
+# → 选中: url1, url2, url3
 
 # ===== 第 2 步：获取全文 =====
 tools/law-news/scripts/law-news.py fetch-article "$url1"
 tools/law-news/scripts/law-news.py fetch-article "$url2"
+tools/law-news/scripts/law-news.py fetch-article "$url3"
 # ← tools/law-news/cache/articles/ARTIxxx.md
 # ← tools/law-news/cache/articles/ARTIyyy.md
+# ← tools/law-news/cache/articles/ARTIzzz.md
 
 # ===== 第 3 步：汇编稿件 =====（脚本完成排版，AI 不拼接 markdown）
 news_path=$(tools/law-news/scripts/law-news.py compile \
-  --articles "ARTIxxx,ARTIyyy" \
+  --articles "ARTIxxx,ARTIyyy,ARTIzzz" \
   --style 简报 \
   --title "法律资讯简报 $(date +%Y-%m-%d)")
 # ← tools/law-news/cache/exports/2026-06-13_法律资讯简报.md
 
-# ===== 第 4 步：发布到飞书 =====
+# ===== 第 4 步：发布到飞书 =====（自动处理配图缩放）
 tools/law-news/scripts/law-news.py publish "$news_path" \
   --title "法律资讯简报 $(date +%Y-%m-%d)"
 # ← ✅ https://...
@@ -208,6 +271,7 @@ tools/law-news/scripts/law-news.py publish "$news_path" \
 全程 AI **不需要**：
 - 拼接 markdown 格式（`compile` 完成）
 - 生成 XML（`publish` 完成）
+- 算图片缩放（`publish` 内置 `get_image_dimensions` 完成）
 - 管理缓存路径（脚本自动处理）
 
 ---

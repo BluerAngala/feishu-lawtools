@@ -162,11 +162,25 @@ python3 --version
 
 ### 共享库
 
-当 2+ 个 skill 用到同一段逻辑时，抽到 `lib/<name>.sh`，在各自脚本中 `source` 引用。常见共享逻辑：
+当 2+ 个 skill 用到同一段逻辑时，抽到 `lib/<name>.py`（或 `.sh`），在各自脚本中 `import` / `source` 引用。常见共享逻辑：
 
 - 飞书 XML 转换（markdown → XML）
 - lark-cli 发布封装
 - 通用缓存读写
+- 媒体尺寸解析（PNG/JPEG/GIF/WebP，纯标准库）
+
+### 飞书简化 XML 关键约定
+
+经过 `law-news` 实战积累的 Feishu Simplified XML 行为：
+
+| 元素 | 支持属性 / 行为 | 注意事项 |
+|------|----------------|----------|
+| `<img href="url"/>` | Feishu 自动抓取并上传图片；存储后用 `scale` 控制大小 | `width`/`height` 会被飞书**忽略**（标准化为 `scale`）。要控制尺寸**必须用 `scale`**，可大于 1.0 |
+| `<h1>...<a href="url">...</a></h1>` | 标题内可嵌套链接 | 渲染为可点击的标题 |
+| `<blockquote><p>...</p></blockquote>` | 块级引用 | 用 markdown `> ` 行转换，每行一个 `<p>` |
+| `<a href="url">text</a>` | 段落内可嵌入链接 | markdown `[text](url)` 直接转 |
+
+**图片尺寸统一策略**：先用纯标准库读 PNG/JPEG/GIF/WebP 的 header 拿到原宽高，再计算 `scale = target_w / orig_w`（可超过 1.0），生成 `<img scale="..." href="..."/>`。这是唯一能保证多图视觉等大、不变形、不模糊的方式。
 
 ### 依赖预检
 
@@ -178,3 +192,4 @@ python3 --version
 2. **禁止 AI 在上下文中拼接 markdown/XML** — `compile` 命令做排版，`publish` 做 XML 转换
 3. **禁止重复请求** — 必须缓存，`list-cache` 可核查
 4. **禁止输出无结构的数据** — 每个命令的返回数据必须文档化（字段表 + 示例）
+5. **禁止用临时文件夹** — 所有缓存文件必须在工具自己的 `cache/` 目录内，保持工具自包含

@@ -93,8 +93,10 @@ cd feishu-lawtools
 | 依赖 | 用途 | 安装方式 |
 |------|------|----------|
 | [lark-cli](https://github.com/earendil-works/lark-cli) | 调用飞书 OpenAPI | `npm install -g @larksuite/cli` |
+| Python 3 | 跑 `law-news` 抓取脚本 | 系统自带 / [python.org](https://python.org) |
 
 > lark-cli 已内置自动更新检测（`lark-cli update --check`），无需手动关注版本。
+> Python 仅 `law-news` 工具需要，所有脚本仅依赖标准库，**无需 `pip install`**。
 
 ### 飞书权限（OAuth Scopes）
 
@@ -145,6 +147,9 @@ lark-cli auth status --format json
 
 # 3. AI 自动添加批注解读
 /law-annotate https://lawyerch.feishu.cn/docx/xxx --style 通俗
+
+# 4. 抓取最新法律资讯并汇编成简报（一步到位发布到飞书）
+/law-news cctv-law --days 3 --max 10 --style 简报
 ```
 
 > 非 pi agent 直接描述需求即可，agent 会自动匹配对应工具。
@@ -155,9 +160,10 @@ lark-cli auth status --format json
 
 | 命令 | 工具文件 | 功能 |
 |------|----------|------|
-| `/law-import` | [`tools/law-import.md`](tools/law-import.md) | 从 URL 或本地文件导入法律条文，创建飞书在线文档 |
-| `/law-highlight` | [`tools/law-highlight.md`](tools/law-highlight.md) | 对文档中的特定词语进行正文内标记（高亮/加粗/标色） |
-| `/law-annotate` | [`tools/law-annotate.md`](tools/law-annotate.md) | AI 自动为每条法律条文生成解读批注 |
+| `/law-import` | [`tools/law-import/law-import.md`](tools/law-import/law-import.md) | 从 URL 或本地文件导入法律条文，创建飞书在线文档 |
+| `/law-news` | [`tools/law-news/law-news.md`](tools/law-news/law-news.md) | 抓取法律资讯（央视网等），按风格汇编为简报/深度/专题文章并发布 |
+| `/law-highlight` | [`tools/law-highlight/law-highlight.md`](tools/law-highlight/law-highlight.md) | 对文档中的特定词语进行正文内标记（高亮/加粗/标色） |
+| `/law-annotate` | [`tools/law-annotate/law-annotate.md`](tools/law-annotate/law-annotate.md) | AI 自动为每条法律条文生成解读批注 |
 
 每个工具的详细步骤说明见对应文件。
 
@@ -219,7 +225,7 @@ https://lawyerch.feishu.cn/docx/xxx#doxcn123456
 ```
 feishu-lawtools/
 ├── SKILL.md                     ← 总调度：元信息、前置检查、流程图、工具索引
-├── AGENTS.md                    ← agent 操作指南
+├── AGENTS.md                    ← agent 操作指南 + 开发规范
 ├── README.md                    ← 本文件（人类可读的说明文档）
 ├── package.json                 ← npm 包信息
 ├── lib/                         ← 共享脚本库
@@ -227,9 +233,13 @@ feishu-lawtools/
     ├── law-import/
     │   └── law-import.md
     ├── law-news/
-    │   ├── law-news.md
-    │   └── scripts/
-    │       └── law-news.sh      ← 机械操作脚本，降低 token 消耗
+    │   ├── law-news.md          ← 资讯获取+汇编+发布工具
+    │   ├── scripts/
+    │   │   └── law-news.py      ← Python 脚本（仅标准库）
+    │   └── cache/               ← 工具自带缓存（git 忽略）
+    │       ├── raw/             ← fetch 原始 JSON
+    │       ├── articles/        ← 单篇正文（.json + .md）
+    │       └── exports/         ← 汇编稿件（.md）
     ├── law-highlight/
     │   └── law-highlight.md
     └── law-annotate/
@@ -240,24 +250,43 @@ feishu-lawtools/
 
 - **所有 skill 收在 `tools/` 下**：根目录只放顶层配置，加再多 skill 也不乱
 - **每个 skill 独立目录**：`tools/law-<name>/` 下辖说明文档 + 可选 `scripts/`
-- **共享逻辑放 `lib/`**：多个 skill 共用的函数抽到 `lib/<name>.sh`
+- **工具自包含缓存**：`tools/<name>/cache/` 内置 `raw/` `articles/` `exports/`，按 `{NAME}_DIR` 可覆盖
+- **共享逻辑放 `lib/`**：多个 skill 共用的函数抽到 `lib/<name>.py`（或 `.sh`）
 
 ---
 
 ## 开发指南
 
+### 设计理念：脚本做实事，AI 只做编排
+
+| 谁 | 负责 | 不负责 |
+|----|------|--------|
+| **脚本** | 抓取 / 解析 / 排版 / 缓存 / 存盘 / 发布 / 配图自适应 | 理解文章内容、做价值判断 |
+| **AI** | 浏览成品、判断选哪些、指定风格、触发命令 | 拼接 markdown / 写 XML / 管理临时文件 |
+
+**绝对规则**：脚本必须把交付物写好存盘，返回**文件路径**。AI 只需 `read` 该路径，不得在上下文中拼接 markdown 或 XML。
+
+### 子命令规范
+
+| 操作 | 子命令 | 说明 |
+|------|--------|------|
+| 获取原始数据 | `fetch` | 拉取列表/正文，保存到本地 |
+| 汇编成品 | `compile` | 将多条数据按风格汇编为最终稿件 |
+| 发布到飞书 | `publish` | 将本地文件推送到飞书 |
+| 查看缓存 | `list-cache` | 展示已缓存的数据 |
+
 ### 新增一个命令
 
 ```bash
-mkdir -p law-summarize
-# 创建 law-summarize/law-summarize.md
+mkdir -p tools/law-summarize
+# 创建 tools/law-summarize/law-summarize.md
 # 在 SKILL.md 工具索引加一行
-# 如有机械操作，在 law-summarize/scripts/ 下加脚本
+# 如有机械操作，在 tools/law-summarize/scripts/ 下加 Python 脚本
 ```
 
 SKILL.md 工具索引格式：
 ```markdown
-| `/law-summarize` | [`law-summarize/law-summarize.md`](law-summarize/law-summarize.md) | 功能简述 |
+| `/law-summarize` | [`tools/law-summarize/law-summarize.md`](tools/law-summarize/law-summarize.md) | 功能简述 |
 ```
 
 ### 开发原则
@@ -266,7 +295,9 @@ SKILL.md 工具索引格式：
 2. **认证**：始终 `--as user`
 3. **频率**：批量操作间隔 1-2 秒
 4. **前置检查**：操作前确保 lark-cli 就绪
-5. **token 优化**：机械操作（curl/API/格式转换）写脚本，AI 只做内容生成
+5. **脚本化**：机械操作（API/格式转换/图片处理）写脚本，AI 只做内容生成
+6. **跨平台**：Python 脚本用 `python3` + 仅标准库，Windows/macOS/Linux 三端可跑
+7. **缓存可追溯**：数据存工具自带 `cache/`，`.gitignore` 已排除
 
 ---
 
@@ -295,6 +326,18 @@ SKILL.md 工具索引格式：
 ### Q: 如何确保 lark-cli 是最新版？
 
 本 skill 的前置检查会自动执行 `lark-cli update --check --json`，有新版本会自动升级。你也可以手动运行 `lark-cli update`。
+
+### Q: `law-news` 怎么用？
+
+```bash
+/law-news cctv-law --days 3 --max 10 --style 简报
+```
+
+AI 会自动跑完 `fetch` → `fetch-article` → `compile` → `publish` 全流程，最终输出飞书文档 URL。所有抓取的数据缓存在 `tools/law-news/cache/`，可 `list-cache` 核查。
+
+### Q: `law-news` 配图大小不一致怎么办？
+
+`publish` 步骤已内置自适应：先用纯标准库读图片 header 拿到原宽高，再算 `scale = 600 / 原宽`，所以无论原图大小，最终显示都是统一的视觉尺寸（飞书 `scale` 支持 > 1.0 放大）。
 
 ---
 

@@ -60,6 +60,103 @@ def die(msg):
     print(msg, file=sys.stderr)
     sys.exit(1)
 
+def is_image_url(text):
+    text = text.strip()
+    return (text.startswith('http://') or text.startswith('https://')) and \
+           any(text.lower().endswith(ext) for ext in ['.jpg', '.jpeg', '.png', '.gif', '.webp'])
+
+
+# ===== image dimension reader (standard library only) =====
+# Read first ~16KB of an image URL and parse width/height from header
+# Supports: JPEG, PNG, GIF, WebP
+
+def get_image_dimensions(url):
+    """Return (width, height) from image URL. Returns None on failure."""
+    try:
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        # Read enough to cover all header formats
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            data = resp.read(65536)
+
+        # PNG: 8-byte signature, then IHDR chunk
+        if data[:8] == b'\x89PNG\r\n\x1a\n':
+            # IHDR starts at byte 8: 4 bytes length, 4 bytes type, then 4 bytes width, 4 bytes height
+            width = int.from_bytes(data[16:20], 'big')
+            height = int.from_bytes(data[20:24], 'big')
+            return width, height
+
+        # GIF: starts with "GIF87a" or "GIF89a", then 7-byte screen descriptor with dimensions
+        if data[:6] in (b'GIF87a', b'GIF89a'):
+            width = int.from_bytes(data[6:8], 'little')
+            height = int.from_bytes(data[8:10], 'little')
+            return width, height
+
+        # WebP: "RIFF" + size + "WEBP"
+        if data[:4] == b'RIFF' and data[8:12] == b'WEBP':
+            # VP8 chunk (lossy): after "VP8 " (4 bytes), 4 bytes size, then 10 bytes of header
+            # 0x9D 0x01 0x2A marker, then 2 bytes width, 2 bytes height
+            if data[12:16] == b'VP8 ':
+                w = int.from_bytes(data[26:28], 'little') & 0x3FFF
+                h = int.from_bytes(data[28:30], 'little') & 0x3FFF
+                return w, h
+            # VP8L chunk (lossless): "VP8L" + 4 bytes size, then 1 byte 0x2F
+            # Then 4 bytes with width-1 (14 bits) and height-1 (14 bits)
+            if data[12:16] == b'VP8L':
+                bits = int.from_bytes(data[21:25], 'little')
+                w = (bits & 0x3FFF) + 1
+                h = ((bits >> 14) & 0x3FFF) + 1
+                return w, h
+            # VP8X (extended): another 10 bytes then 24-bit dimensions
+            if data[12:16] == b'VP8X':
+                w = int.from_bytes(data[24:27], 'little') + 1
+                h = int.from_bytes(data[27:30], 'little') + 1
+                return w, h
+
+        # JPEG: scan markers for SOF0/SOF2/SOF5/SOF6/SOF7/SOF9/SOF10/SOF11
+        if data[:2] == b'\xFF\xD8':
+            i = 2
+            while i < len(data) - 9:
+                if data[i] == 0xFF:
+                    marker = data[i + 1]
+                    # SOF markers (excluding DHT, DNL, etc.)
+                    if marker in (0xC0, 0xC1, 0xC2, 0xC3, 0xC5, 0xC6, 0xC7, 0xC9, 0xCA, 0xCB, 0xCD, 0xCE, 0xCF):
+                        height = int.from_bytes(data[i + 5:i + 7], 'big')
+                        width = int.from_bytes(data[i + 7:i + 9], 'big')
+                        return width, height
+                    # Skip segment
+                    seg_len = int.from_bytes(data[i + 2:i + 4], 'big')
+                    i += 2 + seg_len
+                else:
+                    i += 1
+
+        return None
+    except Exception:
+        return None
+
+
+def fit_image_dimensions(orig_w, orig_h, max_w=600, max_h=400):
+    """Scale image to fit within (max_w, max_h) preserving aspect ratio."""
+    if not orig_w or not orig_h:
+        return max_w, max_h
+    scale_w = max_w / orig_w
+    scale_h = max_h / orig_h
+    scale = min(scale_w, scale_h, 1.0)  # don't upscale small images
+    return int(orig_w * scale), int(orig_h * scale)
+
+
+def calculate_scale(url, target_w=600):
+    """Calculate scale value so image displays at approximately target_w pixels wide.
+    Feishu's `scale` attribute multiplies the image's natural display size.
+    Supports scale > 1.0 (Feishu accepts it) for upscaling small images.
+    """
+    dims = get_image_dimensions(url)
+    if not dims:
+        return 1.0
+    orig_w, orig_h = dims
+    if orig_w <= 0:
+        return 1.0
+    return target_w / orig_w
+
 # ===== fetch: 资讯列表 → 索引文档 .md =====
 
 def fetch_cctv(days=3, max_items=10):
@@ -249,6 +346,21 @@ def fetch_article_cmd(url):
 
     data = fetch_article_content(url)
 
+    # Look up main image from cached raw data
+    raw_dir = os.path.join(get_cache_dir(), 'raw', 'cctv-law')
+    if os.path.isdir(raw_dir):
+        for fn in sorted(os.listdir(raw_dir), reverse=True):
+            if fn.endswith('.json'):
+                with open(os.path.join(raw_dir, fn), 'r') as f:
+                    raw_data = json.load(f)
+                for item in raw_data.get('items', []):
+                    if item.get('url', '').rstrip('/') == url.rstrip('/'):
+                        data['image'] = item.get('image', '') or ''
+                        break
+            if data.get('image'):
+                break
+    data.setdefault('image', '')
+
     # Save JSON
     with open(json_file, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False)
@@ -260,8 +372,8 @@ def fetch_article_cmd(url):
         f'**来源**: 央视网 | {data["date"]} | [原文链接]({data["url"]})',
         '',
     ]
-    if data.get('images'):
-        md_lines.append(f'![]({data["images"][0]})')
+    if data.get('image'):
+        md_lines.append(data['image'])
         md_lines.append('')
     md_lines.append(data['content'])
     md_lines.append('')
@@ -293,8 +405,6 @@ def compile_newsletter(articles_csv, style='简报', title=None):
     lines = [
         f'# {title}',
         '',
-        f'*生成时间: {now_ts()}*',
-        '',
     ]
 
     idx = 0
@@ -313,37 +423,51 @@ def compile_newsletter(articles_csv, style='简报', title=None):
 
         if style == '简报':
             title_text = data.get('title', '')
-            date_text = data.get('date', '')
+            article_url = data.get('url', '')
+            raw_date = data.get('date', '')
+            date_text = raw_date[:10] if raw_date else ''
             content = data.get('content', '')
-            # First 2 sentences
+            source_name = '央视网'
+
+            # First 2 sentences as summary
             sentences = re.split(r'[。！？]', content)
-            first_para = '。'.join(sentences[:2]) + '。' if len(sentences) > 1 else (sentences[0] + '。' if sentences else '')
-            first_para = first_para[:300]
+            summary = '。'.join(sentences[:2]) + '。' if len(sentences) > 1 else (sentences[0] + '。' if sentences else '')
+            summary = summary[:300]
+
+            # Look up main image from raw cache
+            image_url = data.get('image', '') or ''
+            if not image_url:
+                raw_dir = os.path.join(cache_dir, 'raw', 'cctv-law')
+                if os.path.isdir(raw_dir):
+                    for fn in sorted(os.listdir(raw_dir), reverse=True):
+                        if fn.endswith('.json'):
+                            with open(os.path.join(raw_dir, fn), 'r') as f:
+                                raw_data = json.load(f)
+                            for item in raw_data.get('items', []):
+                                if article_id_from_url(item.get('url', '')) == aid:
+                                    image_url = item.get('image', '') or ''
+                                    break
+                        if image_url:
+                            break
 
             lines.extend([
-                f'## {idx}. {title_text}',
-                '',
-                f'**日期**: {date_text}',
-                '',
-                first_para,
+                f'## [{idx}. {title_text}]({article_url})',
                 '',
             ])
-
-            kw = data.get('keywords', [])
-            imgs = data.get('images', [])
-            meta_parts = []
-            if kw:
-                meta_parts.append(f'**关键词**: {"、".join(kw)}')
-            if imgs:
-                meta_parts.append(f'![]({imgs[0]})')
-            if meta_parts:
-                lines.extend(['  \n'.join(meta_parts), ''])
+            if image_url:
+                lines.extend([f'![]({image_url})', ''])
+            lines.extend([
+                summary,
+                '',
+                f'> 日期：{date_text}',
+                f'> 来源：{source_name}',
+                f'> 原文链接：[{article_url}]({article_url})',
+                '',
+            ])
 
         elif style in ('深度', '专题'):
             with open(md_path, 'r', encoding='utf-8') as f:
                 lines.extend(['---', '', f.read(), ''])
-
-    lines.extend(['', '---', '', f'*共 {idx} 篇 | 来源: 央视网*'])
 
     with open(md_file, 'w', encoding='utf-8') as f:
         f.write('\n'.join(lines))
@@ -360,24 +484,82 @@ def publish_doc(filepath, title='法律资讯', wiki=None):
     with open(filepath, 'r', encoding='utf-8') as f:
         md_content = f.read()
 
-    # Convert markdown to lark simplified XML
+    # Convert markdown to simplified XML (supports <img href="url"/>)
     xml_parts = [f'<title>{htmlmod.escape(title)}</title>']
+    prev_blank = False
+    in_blockquote = False
+
     for line in md_content.split('\n'):
         stripped = line.rstrip()
+
+        # Skip h1 title line (passed via --title)
+        if stripped.startswith('# ') and not stripped.startswith('## '):
+            continue
+
+        # Handle blockquote: consecutive > lines grouped into one <blockquote>
+        if stripped.startswith('> '):
+            content = stripped[2:]
+            converted = htmlmod.escape(content)
+            converted = re.sub(r'\*\*(.+?)\*\*', r'<b>\1</b>', converted)
+            converted = re.sub(r'\[([^\]]+)\]\(([^)]+)\)', r'<a href="\2">\1</a>', converted)
+            converted = converted.replace('*', '')
+            if not in_blockquote:
+                xml_parts.append('<blockquote>')
+                in_blockquote = True
+            xml_parts.append(f'<p>{converted}</p>')
+            prev_blank = False
+            continue
+        else:
+            if in_blockquote:
+                xml_parts.append('</blockquote>')
+                in_blockquote = False
+
+        # Horizontal rule → blank line
+        if re.match(r'^-{3,}$', stripped):
+            if not prev_blank:
+                xml_parts.append('<p></p>')
+                prev_blank = True
+            continue
+
+        # Collapse consecutive blank lines
         if not stripped:
-            xml_parts.append('<p></p>')
-        elif stripped.startswith('## '):
-            xml_parts.append(f'<h1>{htmlmod.escape(stripped[3:])}</h1>')
+            if not prev_blank:
+                xml_parts.append('<p></p>')
+                prev_blank = True
+            continue
+
+        prev_blank = False
+
+        if stripped.startswith('## '):
+            content = stripped[3:]
+            m = re.match(r'^\[(.+?)\]\(([^)]+)\)$', content)
+            if m:
+                link_text = m.group(1)
+                link_url = m.group(2)
+                xml_parts.append(f'<h1><a href="{htmlmod.escape(link_url)}">{htmlmod.escape(link_text)}</a></h1>')
+            else:
+                xml_parts.append(f'<h1>{htmlmod.escape(content)}</h1>')
         elif stripped.startswith('### '):
             xml_parts.append(f'<h2>{htmlmod.escape(stripped[4:])}</h2>')
-        elif stripped.startswith('**') and stripped.endswith('**'):
-            xml_parts.append(f'<p><b>{htmlmod.escape(stripped[2:-2])}</b></p>')
+        elif is_image_url(stripped):
+            scale = calculate_scale(stripped, target_w=600)
+            xml_parts.append(f'<img scale="{scale:.4f}" href="{stripped}" />')
+        elif re.match(r'^!\[.*\]\((.+)\)$', stripped):
+            img_url = re.match(r'^!\[.*\]\((.+)\)$', stripped).group(1)
+            scale = calculate_scale(img_url, target_w=600)
+            xml_parts.append(f'<img scale="{scale:.4f}" href="{img_url}" />')
         else:
-            xml_parts.append(f'<p>{htmlmod.escape(stripped)}</p>')
+            converted = htmlmod.escape(stripped)
+            converted = re.sub(r'\*\*(.+?)\*\*', r'<b>\1</b>', converted)
+            converted = re.sub(r'\[([^\]]+)\]\(([^)]+)\)', r'<a href="\2">\1</a>', converted)
+            converted = converted.replace('*', '')
+            xml_parts.append(f'<p>{converted}</p>')
+
+    if in_blockquote:
+        xml_parts.append('</blockquote>')
 
     xml = '\n'.join(xml_parts)
 
-    # Call lark-cli
     try:
         proc = subprocess.run(
             ['lark-cli', 'docs', '+create', '--api-version', 'v2',
@@ -386,7 +568,7 @@ def publish_doc(filepath, title='法律资讯', wiki=None):
         )
         result = json.loads(proc.stdout)
     except subprocess.CalledProcessError as e:
-        die(f"lark-cli failed: {e.stderr or e.stdout}")
+        die(f"lark-cli create failed: {e.stderr or e.stdout}")
     except json.JSONDecodeError as e:
         die(f"lark-cli output parse error: {e}")
 
