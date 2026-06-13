@@ -1,3 +1,11 @@
+---
+name: law-import
+description: 导入法律条文，创建飞书文档
+tags: [import, transform]
+requires: [lark-cli]
+scripts: []
+---
+
 # /law-import — 导入法律条文
 
 将法律文本从URL或本地文件导入飞书在线文档，结构化呈现（章节→条款）。

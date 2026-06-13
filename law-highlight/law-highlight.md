@@ -1,3 +1,11 @@
+---
+name: law-highlight
+description: 正文内标记（高亮/加粗/标色）
+tags: [annotate, transform]
+requires: [lark-cli]
+scripts: []
+---
+
 # /law-highlight — 划重点（正文格式化标记）
 
 对文档中的特定词语进行**正文内标记**（加粗/标色/高亮），而不是添加隐藏的批注。

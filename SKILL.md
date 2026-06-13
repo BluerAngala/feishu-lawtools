@@ -1,21 +1,28 @@
 ---
 name: feishu-lawtools
 version: 1.1.0
-description: "飞书法律工具箱。法律条文导入飞书在线文档、AI划重点标记、AI批注解读。触发方式：/law-import、/law-highlight、/law-annotate、/法律导入、/划重点、/法律批注"
+description: "飞书法律工具箱。法律条文导入飞书在线文档、法律资讯获取、AI划重点标记、AI批注解读。触发方式：/law-import、/law-news、/law-highlight、/law-annotate、/法律导入、/法律资讯、/划重点、/法律批注"
 compatibility: "pi, Claude Code, Codex - 任何能执行 bash 命令和调用 lark-cli 的 AI agent"
 metadata:
   requires:
     bins: ["lark-cli"]
   cross-agent: true
+  categories:
+    import: 导入与创建
+    fetch: 外部数据获取
+    annotate: 标记与批注
+    transform: 格式转换
+    ai: AI 内容生成
   tools:
-    - tools/law-import.md
-    - tools/law-highlight.md
-    - tools/law-annotate.md
+    - law-import/law-import.md
+    - law-news/law-news.md
+    - law-highlight/law-highlight.md
+    - law-annotate/law-annotate.md
 ---
 
 # 飞书法律工具箱 (feishu-lawtools)
 
-把法律法规从URL或本地文件导入飞书在线文档，结构化呈现（章节→条款），并支持AI自动逐条添加批注解读。
+把法律法规从URL或本地文件导入飞书在线文档，获取法律资讯并整理为文章，结构化呈现（章节→条款），并支持AI自动逐条添加批注解读。
 
 ## 安装
 
@@ -93,10 +100,10 @@ lark-cli update
 ### ③ 验证认证
 
 ```bash
-lark-cli auth status --format json
+lark-cli auth status
 ```
 
-如果 `tokenStatus` 不是 `"valid"`，提示用户重新登录：
+如果 `tokenStatus` 不是 `"valid"`（或为 `"needs_refresh"`，会自动刷新），提示用户重新登录：
 
 ```bash
 lark-cli auth login --scope "docx:document:create,docx:document:readonly,docx:document:write_only,drive:document.comment:create"
@@ -109,11 +116,13 @@ lark-cli auth login --scope "docx:document:create,docx:document:readonly,docx:do
 ## 流程图
 
 ```
-用户输入（URL / 文件路径）
+用户输入（URL / 文件路径 / 资讯源）
        ↓
- ① 提取法律文本内容
+ ① 提取内容或获取资讯列表
+       ├─ 法律文本 → 提取正文
+       └─ 资讯源 → API 获取新闻列表
        ↓
- ② 解析结构化：法律名称 → 章节 → 条文
+ ② 解析结构化：法律名称 → 章节 → 条文 / 新闻 → 文章
        ↓
  ③ 创建飞书在线文档（docs +create --api-version v2）
        ↓
@@ -144,6 +153,7 @@ lark-cli auth login --scope "docx:document:create,docx:document:readonly,docx:do
 
 ```
 /law-import    <url|file_path> [--title "自定义标题"]
+/law-news      <source> [--days 3] [--max 10] [--style 简报|深度|专题]
 /law-highlight <doc_url> <term> [--style highlight|bold]
 /law-annotate  <doc_url> [--scope "article-1,article-5"] [--style 通俗|专业|案例]
 ```
@@ -153,6 +163,7 @@ lark-cli auth login --scope "docx:document:create,docx:document:readonly,docx:do
 非 pi agent 不支持 `/command` 格式。直接向 AI 描述需求即可：
 
 > "把这个法律导入飞书文档" → `/law-import`
+> "看看最近有什么法治新闻" → `/law-news`
 > "给文档里的 '故意犯罪' 划重点" → `/law-highlight`
 > "给这个法律逐条加 AI 批注" → `/law-annotate`
 
@@ -160,11 +171,12 @@ AI agent 会根据对应工具文件的步骤说明自动调用 `lark-cli` 完�
 
 ## 工具索引
 
-| 工具 | 文件 | 功能 |
-|------|------|------|
-| `/law-import` | [`tools/law-import.md`](tools/law-import.md) | 导入法律条文，创建飞书文档 |
-| `/law-highlight` | [`tools/law-highlight.md`](tools/law-highlight.md) | 正文内标记（高亮/加粗/标色） |
-| `/law-annotate` | [`tools/law-annotate.md`](tools/law-annotate.md) | AI 逐条生成批注解读 |
+| 工具 | 分类 | 文件 | 功能 |
+|------|------|------|------|
+| `/law-import` | import/transform | [`law-import/law-import.md`](law-import/law-import.md) | 导入法律条文，创建飞书文档 |
+| `/law-news` | fetch/transform | [`law-news/law-news.md`](law-news/law-news.md) | 获取法律资讯，整理为文章 |
+| `/law-highlight` | annotate/transform | [`law-highlight/law-highlight.md`](law-highlight/law-highlight.md) | 正文内标记（高亮/加粗/标色） |
+| `/law-annotate` | annotate/ai | [`law-annotate/law-annotate.md`](law-annotate/law-annotate.md) | AI 逐条生成批注解读 |
 
 ## 注意事项
 

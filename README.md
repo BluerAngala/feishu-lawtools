@@ -218,16 +218,27 @@ https://lawyerch.feishu.cn/docx/xxx#doxcn123456
 
 ```
 feishu-lawtools/
-├── SKILL.md                   ← 总调度：元信息、安装、前置检查、工具索引
-├── README.md                  ← 本文件（人类可读的说明文档）
-├── package.json               ← npm 包信息
-├── tools/
-│   ├── law-import.md          ← /law-import 命令详解
-│   ├── law-highlight.md       ← /law-highlight 命令详解
-│   └── law-annotate.md        ← /law-annotate 命令详解
+├── SKILL.md                     ← 总调度：元信息、前置检查、流程图、工具索引
+├── README.md                    ← 本文件（人类可读的说明文档）
+├── package.json                 ← npm 包信息
+├── AGENTS.md                    ← agent 操作指南
+├── law-import/
+│   └── law-import.md            ← /law-import 命令详解
+├── law-news/
+│   ├── law-news.md              ← /law-news 命令详解
+│   └── scripts/
+│       └── law-news.sh          ← 机械操作脚本，降低 token 消耗
+├── law-highlight/
+│   └── law-highlight.md         ← /law-highlight 命令详解
+└── law-annotate/
+    └── law-annotate.md          ← /law-annotate 命令详解
 ```
 
-各工具文件独立成篇，AI agent 按需加载，避免 SKILL.md 过于臃肿。
+### 结构规则
+
+- **每个 skill 独立目录**：`law-<name>/` 下辖说明文档 + 可选 `scripts/`
+- **脚本归所属 skill**：`scripts/` 在 skill 目录内，避免误以为是全局工具
+- **纯指令 skill 无需脚本**：无机械操作时，只放 `.md` 即可
 
 ---
 
@@ -235,41 +246,25 @@ feishu-lawtools/
 
 ### 新增一个命令
 
-假设要新增 `law-summarize`（AI 摘要）命令：
-
-**1. 在 `tools/` 下创建工具文件**
-
-```markdown
-# /law-summarize — 条文摘要
-
-快速生成法律文档的摘要。
-
-/law-summarize <doc_url> [--max-length 500]
-
-步骤：
-1. docs +fetch 获取文档内容
-2. AI 生成摘要
-3. 返回摘要文本或追加到文档末尾
+```bash
+mkdir -p law-summarize
+# 创建 law-summarize/law-summarize.md
+# 在 SKILL.md 工具索引加一行
+# 如有机械操作，在 law-summarize/scripts/ 下加脚本
 ```
 
-**2. 在 SKILL.md 的工具索引中添加一行**
-
+SKILL.md 工具索引格式：
 ```markdown
-| `/law-summarize` | [`tools/law-summarize.md`](tools/law-summarize.md) | AI 生成条文摘要 |
+| `/law-summarize` | [`law-summarize/law-summarize.md`](law-summarize/law-summarize.md) | 功能简述 |
 ```
-
-**3. 测试**
-
-在 pi agent 中调用 `/law-summarize <doc_url>` 验证。
 
 ### 开发原则
 
-1. **命令前缀统一**：所有命令以 `/law-` 开头
-2. **依赖显式声明**：在 SKILL.md 的 `metadata.requires` 中标明依赖的 CLI 工具
-3. **认证优先**：所有操作使用 `--as user`，不依赖 bot 身份
-4. **幂等操作**：划重点和批注支持重复调用
-5. **频率控制**：批量操作时每条间隔 1-2 秒
-6. **前置检查先行**：任何命令执行前确保 lark-cli 就绪
+1. **命令前缀统一**：`/law-`
+2. **认证**：始终 `--as user`
+3. **频率**：批量操作间隔 1-2 秒
+4. **前置检查**：操作前确保 lark-cli 就绪
+5. **token 优化**：机械操作（curl/API/格式转换）写脚本，AI 只做内容生成
 
 ---
 

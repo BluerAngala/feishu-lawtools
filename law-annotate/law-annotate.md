@@ -1,3 +1,11 @@
+---
+name: law-annotate
+description: AI 逐条生成批注解读
+tags: [annotate, ai]
+requires: [lark-cli]
+scripts: []
+---
+
 # /law-annotate — AI 自动添加批注
 
 对已导入的法律文档，AI 自动为每条条文生成解读批注。
