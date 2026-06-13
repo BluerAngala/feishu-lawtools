@@ -2,10 +2,10 @@
 name: feishu-lawtools
 version: 1.1.0
 description: "飞书法律工具箱。法律条文导入飞书在线文档、法律资讯获取、AI划重点标记、AI批注解读。触发方式：/law-import、/law-news、/law-highlight、/law-annotate、/法律导入、/法律资讯、/划重点、/法律批注"
-compatibility: "pi, Claude Code, Codex - 任何能执行 bash 命令和调用 lark-cli 的 AI agent"
+compatibility: "pi, Claude Code, Codex, OpenCode - 任何能执行命令和调用 lark-cli 的 AI agent"
 metadata:
   requires:
-    bins: ["lark-cli"]
+    bins: ["lark-cli", "python3"]
   cross-agent: true
   categories:
     import: 导入与创建
@@ -69,37 +69,40 @@ cd feishu-lawtools
 
 ---
 
-## ⚡ 前置检查：lark-cli 就绪保障
+## 系统依赖
+
+各工具依赖汇总。AI agent 应在执行对应工具前置检查时确认依赖可用。
+
+| 工具 | 全局依赖 | 脚本语言 | 说明 |
+|------|----------|----------|------|
+| `law-import` | `lark-cli` | 无脚本（纯 AI 指令） | URL/文件 → 飞书文档 |
+| `law-news` | `lark-cli`, `python3` | Python（标准库） | 新闻抓取、排版、发布 |
+| `law-highlight` | `lark-cli` | 无脚本（纯 CLI 指令） | 正文标记 |
+| `law-annotate` | `lark-cli` | 无脚本（纯 AI 指令） | AI 批注 |
+
+### 安装方式
+
+```bash
+# lark-cli（所有工具必须）
+npm install -g @larksuite/cli
+
+# python3（仅 law-news 需要，macOS/Linux 自带，Windows 到 python.org 下载）
+python3 --version
+```
+
+> 所有 `.py` 脚本**仅使用 Python 标准库**，无需 `pip install`。
+
+---
+
+## ⚡ 前置检查
 
 **每次执行任何命令前，先运行以下检查。**
 
-### ① 检查是否安装
+### ① lark-cli
 
 ```bash
-which lark-cli
-```
-
-如果未安装，自动安装：
-
-```bash
-npm install -g @larksuite/cli
-```
-
-### ② 检查更新
-
-```bash
+which lark-cli || npm install -g @larksuite/cli
 lark-cli update --check --json
-```
-
-如果返回的 JSON 中 `updateAvailable` 为 `true`（或命令非零退出），自动更新：
-
-```bash
-lark-cli update
-```
-
-### ③ 验证认证
-
-```bash
 lark-cli auth status
 ```
 
@@ -109,7 +112,13 @@ lark-cli auth status
 lark-cli auth login --scope "docx:document:create,docx:document:readonly,docx:document:write_only,drive:document.comment:create"
 ```
 
-> 以上三步是自动前置检查，AI agent 应在响应用户需求前自行完成，不要问用户「lark-cli 装了吗」。
+### ② python3（仅 /law-news）
+
+```bash
+python3 --version || echo "请到 https://python.org 安装 Python 3"
+```
+
+> 以上是自动前置检查，AI agent 应在响应用户需求前自行完成，不要问用户「装了吗」。
 
 ---
 
