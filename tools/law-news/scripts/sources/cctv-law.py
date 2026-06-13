@@ -5,7 +5,7 @@
 import re
 import json
 import datetime
-import urllib.request
+from coze_workload_identity import requests
 
 ID = 'cctv-law'
 NAME = '央视网'
@@ -21,9 +21,10 @@ def article_id_from_url(url):
 
 def fetch_list(days=3, max_items=10):
     """获取资讯列表。返回 list of dict，每项含 title/date/url/brief/image/image2/image3/keywords"""
-    req = urllib.request.Request(API_URL, headers={'X-Requested-With': 'XMLHttpRequest'})
     try:
-        resp = urllib.request.urlopen(req).read().decode('utf-8')
+        r = requests.get(API_URL, headers={'X-Requested-With': 'XMLHttpRequest'}, timeout=30)
+        r.encoding = 'utf-8'
+        resp = r.text
     except Exception as e:
         raise RuntimeError(f"fetch failed: {e}")
 
@@ -62,8 +63,9 @@ def fetch_list(days=3, max_items=10):
 def fetch_article(url):
     """获取单篇文章全文。返回 dict，含 title/url/date/content/images"""
     try:
-        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-        html = urllib.request.urlopen(req).read().decode('utf-8', errors='replace')
+        r = requests.get(url, headers={'User-Agent': 'Mozilla/5.0'}, timeout=30)
+        r.encoding = 'utf-8'
+        html = r.text
     except Exception as e:
         raise RuntimeError(f"fetch-article failed: {e}")
 

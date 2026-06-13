@@ -287,6 +287,97 @@ function getDesignSystem(themeName, colors) {
         textShadow: '0 0 5px rgba(0, 255, 255, 0.5)'
       }
     },
+    'legal': {
+      container: {
+        padding: '0',
+        fontFamily: "'PingFang SC', -apple-system-font, BlinkMacSystemFont, 'Helvetica Neue', 'Hirino Sans GB', 'Microsoft YaHei UI', 'Microsoft YaHei', Arial, sans-serif",
+        lineHeight: '1.75',
+        fontSize: '15px'
+      },
+      card: {
+        maxWidth: '100%',
+        margin: '0',
+        padding: '0',
+        backgroundColor: colors.surface || '#FFFFFF',
+        borderRadius: '0'
+      },
+      h2Symbol: '⚖',
+      h2SymbolColor: colors.brand || '#1E3A8A',
+      h2SymbolShadow: '0 0 8px rgba(30, 58, 138, 0.3)',
+      h1: {
+        margin: '1.5em 0 0.75em 0',
+        padding: '0',
+        fontSize: '22px',
+        fontWeight: 'bold',
+        lineHeight: '1.4',
+        color: colors.text || '#1F2937',
+        textAlign: 'center'
+      },
+      h2: {
+        color: colors.brand || '#1E3A8A',
+        padding: '0',
+        margin: '2em 0 0.75em 0',
+        fontSize: '20px',
+        fontWeight: 'bold',
+        lineHeight: '1.4',
+        textAlign: 'center'
+      },
+      h3: {
+        color: colors.brand || '#1E3A8A',
+        borderLeft: `4px solid ${colors.brand || '#1E3A8A'}`,
+        padding: '0 0 0.4em 12px',
+        margin: '2em 0 0.75em 0',
+        fontSize: '18px',
+        fontWeight: 'bold',
+        lineHeight: '1.2'
+      },
+      paragraph: {
+        color: colors.text || '#1F2937',
+        fontSize: '15px',
+        lineHeight: '2.1',
+        margin: '1.2em 0',
+        textAlign: 'justify',
+        letterSpacing: '0.15em'
+      },
+      strong: {
+        color: '#DC2626',
+        fontWeight: 'bold'
+      },
+      blockquote: {
+        margin: '0.8em 0',
+        padding: '8px 12px',
+        backgroundColor: '#F9FAFB',
+        border: 'none',
+        borderLeft: `3px solid #D1D5DB`,
+        borderRadius: '3px',
+        color: '#9CA3AF',
+        fontSize: '13px',
+        lineHeight: '1.7',
+        letterSpacing: '0.05em'
+      },
+      hr: {
+        border: 'none',
+        height: '1px',
+        background: `linear-gradient(to right, ${colors.brand || '#1E3A8A'}00, ${colors.brand || '#1E3A8A'}99, ${colors.brand || '#1E3A8A'}00)`,
+        margin: '2em 0'
+      },
+      link: {
+        color: colors.brand || '#1E3A8A',
+        textDecoration: 'none'
+      },
+      list: {
+        listStyle: 'none',
+        margin: '0 0 1.5em',
+        padding: '0',
+        textAlign: 'left',
+        color: colors.secondary || '#4B5563'
+      },
+      listItem: {
+        margin: '0.5em 0',
+        padding: '0',
+        lineHeight: '1.75'
+      }
+    },
     'default': {
       container: {
         backgroundColor: colors.bg || '#f9f9f9',

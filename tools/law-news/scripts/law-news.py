@@ -27,7 +27,7 @@ import json
 import re
 import datetime
 import html as htmlmod
-import urllib.request
+from coze_workload_identity import requests
 import subprocess
 import importlib
 import importlib.util
@@ -117,10 +117,8 @@ def is_image_url(text):
 def get_image_dimensions(url):
     """Return (width, height) from image URL. Returns None on failure."""
     try:
-        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-        # Read enough to cover all header formats
-        with urllib.request.urlopen(req, timeout=15) as resp:
-            data = resp.read(65536)
+        resp = requests.get(url, headers={'User-Agent': 'Mozilla/5.0'}, timeout=15)
+        data = resp.content[:65536]
 
         # PNG: 8-byte signature, then IHDR chunk
         if data[:8] == b'\x89PNG\r\n\x1a\n':
@@ -425,6 +423,7 @@ def compile_newsletter(articles_csv, style='简报', title=None, lawyer_comments
                 comment_text = comments[aid].strip()
                 lawyer_block = [f'**{lawyer_label}**：{comment_text}']
                 if lawyer_sig_line:
+                    lawyer_block.append('')  # blank line → separate paragraph for signature
                     lawyer_block.append(lawyer_sig_line)
                 lines.extend(lawyer_block + [''])
             lines.extend([

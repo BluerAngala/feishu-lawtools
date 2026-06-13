@@ -139,7 +139,7 @@ function renderHTML(markdown, theme, frontmatter, themeName) {
 <body>
   <div style="${containerStyles}">
     <section style="${cardStyles}">
-      <header style="${generateComponentStyles(components.header)}; margin: -25px -25px 24px -25px; padding: 36px 25px; text-align: center;">
+      <header style="background: #1E3A8A; color: #fff; padding: 12px 16px; margin: 0; text-align: center;">
         <h1 style="font-size: ${typography.title.size}; font-weight: ${typography.title.weight}; color: ${headerColor}; margin: 0; ${typography.title.letterSpacing ? `letter-spacing: ${typography.title.letterSpacing};` : ''}">${title}</h1>
         ${frontmatter.subtitle ? `<p style="font-size: ${typography.subtitle.size}; color: ${headerColor}; opacity: 0.85; margin: 12px 0 0 0;">${frontmatter.subtitle}</p>` : ''}
       </header>
@@ -203,7 +203,7 @@ function markdownToInlineHTML(markdown, ds) {
   });
 
   // 处理图片
-  html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" style="max-width: 100%; height: auto; display: block; margin: 20px auto;" />');
+  html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" style="max-width: 100%; height: auto; display: block; margin: 8px auto 0 auto;" />');
 
   // 处理无序列表
   html = processUnorderedLists(html, ds);
@@ -263,7 +263,7 @@ function processBlockquotes(html, ds) {
       result.push(line);
     } else {
       if (inBlockquote) {
-        const content = blockquoteContent.map(l => `<p style="margin: 0.6em 0; word-break: break-all; overflow-wrap: break-word;">${l}</p>`).join('');
+        const content = blockquoteContent.filter(l => l.trim() !== '').map(l => `<p style="margin: 0.4em 0; word-break: break-all; overflow-wrap: break-word;">${l}</p>`).join('');
         result.push(generateBlockquoteHTML(content, ds));
         inBlockquote = false;
         blockquoteContent = [];
@@ -273,7 +273,7 @@ function processBlockquotes(html, ds) {
   }
 
   if (inBlockquote) {
-    const content = blockquoteContent.map(l => `<p style="margin: 0.6em 0; word-break: break-all; overflow-wrap: break-word;">${l}</p>`).join('');
+    const content = blockquoteContent.filter(l => l.trim() !== '').map(l => `<p style="margin: 0.4em 0; word-break: break-all; overflow-wrap: break-word;">${l}</p>`).join('');
     result.push(generateBlockquoteHTML(content, ds));
   }
 
