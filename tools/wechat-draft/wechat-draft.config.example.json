@@ -1,0 +1,7 @@
+{
+  "_note": "wechat-draft 配置文件。首次使用先 cp 再填写。",
+  "token_url": "https://your-domain.com/api/getToken?appid=YOUR_APPID&secret=YOUR_APPSECRET",
+  "author": "你的名字",
+  "cover_image": "https://example.com/default-cover.jpg",
+  "digest": ""
+}

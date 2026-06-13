@@ -10,12 +10,56 @@ scripts: [scripts/wechat-draft.py]
 
 将排版好的 HTML 内容一键推送为微信公众号草稿，自动下载图片 → 上传到微信 → 替换 URL → 创建草稿。
 
+## 首次使用
+
+使用本工具前，你**必须拥有一个微信公众号**（订阅号或服务号），并完成以下配置：
+
+```bash
+# 查看完整的配置指引
+python3 tools/wechat-draft/scripts/wechat-draft.py show-setup
 ```
-python3 tools/wechat-draft/scripts/wechat-draft.py publish-draft \
-  --title "标题" \
-  --html path/to/article.html \
-  [--author "作者"] \
-  [--digest "摘要"]
+
+### 配置步骤
+
+**① 登录微信公众号后台**
+打开 [https://mp.weixin.qq.com](https://mp.weixin.qq.com)
+
+**② 获取 AppID 和 AppSecret**
+开发 → 基本配置 → 查看 AppID / 重置 AppSecret
+
+**③ 配置 IP 白名单**
+开发 → 基本配置 → IP 白名单
+添加你部署 token 接口的服务器公网 IP。
+> 📸 详细操作截图见 `tools/wechat-draft/联系我.jpg`
+
+**④ 部署 access_token 接口**
+你需要一个返回 `{"access_token": "..."}` 的 HTTP 接口。
+可以用云函数简单实现：
+
+```python
+# 示例：Cloud Function 或你自己的服务器
+def handle(request):
+    appid = request.args['appid']
+    secret = request.args['secret']
+    # 调用微信 API 获取 token
+    # return {"access_token": "xxx"}
+```
+
+**⑤ 配置 token_url**
+```bash
+# 方式一：命令行传入
+python3 tools/wechat-draft/scripts/wechat-draft.py test-token \
+  --token-url "https://你的域名/api/getToken?appid=...&secret=..."
+
+# 方式二：配置文件（推荐）
+cp tools/wechat-draft/wechat-draft.config.example.json tools/wechat-draft/wechat-draft.config.json
+# 编辑 wechat-draft.config.json，填入你的 token_url
+python3 tools/wechat-draft/scripts/wechat-draft.py test-token \
+  --config @tools/wechat-draft/wechat-draft.config.json
+
+# 方式三：环境变量
+export WECHAT_TOKEN_URL="https://..."
+python3 tools/wechat-draft/scripts/wechat-draft.py test-token
 ```
 
 ---
@@ -24,10 +68,11 @@ python3 tools/wechat-draft/scripts/wechat-draft.py publish-draft \
 
 | 命令 | 功能 |
 |------|------|
+| `show-setup` | 显示首次使用配置指引 |
+| `test-token` | 测试 token 获取是否正常 |
 | `publish-draft` | 发布 HTML 为微信公众号草稿 |
 | `list-drafts` | 查看草稿箱列表 |
 | `delete-draft --media-id ID` | 删除草稿 |
-| `test-token` | 测试 token 获取是否正常 |
 
 ---
 
@@ -65,29 +110,35 @@ python3 tools/wechat-draft/scripts/wechat-draft.py publish-draft \
 python3 tools/wechat-draft/scripts/wechat-draft.py publish-draft \
   --title "文章标题"           # 必填
   --html "path/to/file.html"   # 必填，HTML 文件路径
-  --author "陈恒"              # 可选，作者（≤8字）
-  --digest "摘要文字"          # 可选，不填则自动提取
-  --cover-image "URL"          # 可选，封面图 URL（默认用第一张正文图）
+  --token-url "URL"            # 必填，token 接口（或用 --config）
+  --author "作者"              # 可选（≤8字）
+  --digest "摘要"              # 可选
+  --cover-image "URL"          # 可选，封面图（默认用第一张正文图）
   --content-source-url "URL"   # 可选，阅读原文链接
-  --token-url "URL"            # 可选，自定义 token 接口
   --config "@path/to/config.json"  # 可选，配置文件
 ```
 
 ---
 
-## 配置文件（可选）
+## 配置文件
 
-可以通过 JSON 配置文件传入参数，避免每次命令行重复：
+```bash
+cp tools/wechat-draft/wechat-draft.config.example.json tools/wechat-draft/wechat-draft.config.json
+```
+
+编辑 `wechat-draft.config.json`：
 
 ```json
 {
-  "token_url": "https://your-token-endpoint/...",
-  "author": "陈恒",
+  "token_url": "https://你的域名/api/getToken?appid=APPID&secret=SECRET",
+  "author": "作者名",
   "cover_image": "https://example.com/cover.jpg"
 }
 ```
 
-使用：`--config @tools/wechat-draft/config.json`
+使用：`--config @tools/wechat-draft/wechat-draft.config.json`
+
+> ⚠ `wechat-draft.config.json` 已加入 `.gitignore`，不会提交到仓库。
 
 ---
 
@@ -103,8 +154,8 @@ python3 tools/wechat-draft/scripts/wechat-draft.py publish-draft \
 # 步骤 5：推送为微信公众号草稿
 python3 tools/wechat-draft/scripts/wechat-draft.py publish-draft \
   --title "法律资讯简报 2026-06-13" \
-  --html "tools/law-news/cache/exports/2026-06-13_法律资讯简报_2026-06-13_spring-fresh.html" \
-  --author "陈恒"
+  --html "tools/law-news/cache/exports/...html" \
+  --config @tools/wechat-draft/wechat-draft.config.json
 ```
 
 ---
@@ -113,21 +164,22 @@ python3 tools/wechat-draft/scripts/wechat-draft.py publish-draft \
 
 ```
 tools/wechat-draft/
-├── wechat-draft.md           ← 本文档
+├── wechat-draft.md                    ← 本文档
+├── wechat-draft.config.example.json   ← 配置示例
+├── 联系我.jpg                         ← 配置操作截图
 ├── scripts/
-│   └── wechat-draft.py       ← Python 脚本
+│   └── wechat-draft.py                ← Python 脚本
 └── cache/
-    └── images/               ← 下载的图片缓存
-        ├── a1b2c3d4e5f6.jpg
-        └── ...
+    └── images/                        ← 下载的图片缓存
 ```
 
 ---
 
 ## 注意事项
 
+- **必须先配置 token_url**，否则所有命令都会提示配置指引
 - **图片必须来自微信**：微信公众号会过滤所有外部图片 URL，脚本自动处理上传和替换
-- **Token 接口**：使用自定义 token 接口绕过微信 IP 白名单限制
+- **IP 白名单**：token 接口的服务器 IP 必须加入微信 IP 白名单，否则 API 调用会返回 40164 错误
 - **封面图**：微信要求草稿必须有 `thumb_media_id`（永久素材 ID），脚本自动用第一张正文图作为封面
 - **图片格式**：仅支持 JPG/PNG，JFIF 等格式会自动转换
 - **图片大小**：uploadimg 限制 1MB 以下
