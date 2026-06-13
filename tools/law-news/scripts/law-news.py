@@ -63,7 +63,7 @@ def die(msg):
 def is_image_url(text):
     text = text.strip()
     return (text.startswith('http://') or text.startswith('https://')) and \
-           any(text.lower().endswith(ext) for ext in ['.jpg', '.jpeg', '.png', '.gif', '.webp'])
+           any(text.lower().endswith(ext) for ext in ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.jfif'])
 
 
 # ===== image dimension reader (standard library only) =====
@@ -346,7 +346,7 @@ def fetch_article_cmd(url):
 
     data = fetch_article_content(url)
 
-    # Look up metadata (image, keywords) from cached raw data
+    # Look up metadata (image, keywords, brief) from cached raw data
     raw_dir = os.path.join(get_cache_dir(), 'raw', 'cctv-law')
     if os.path.isdir(raw_dir):
         for fn in sorted(os.listdir(raw_dir), reverse=True):
@@ -359,11 +359,14 @@ def fetch_article_cmd(url):
                             data['image'] = item.get('image', '') or ''
                         if not data.get('keywords'):
                             data['keywords'] = item.get('keywords', [])
+                        if not data.get('brief'):
+                            data['brief'] = item.get('brief', '')
                         break
             if data.get('image'):
                 break
     data.setdefault('image', '')
     data.setdefault('keywords', [])
+    data.setdefault('brief', '')
 
     # Save JSON
     with open(json_file, 'w', encoding='utf-8') as f:
@@ -377,7 +380,7 @@ def fetch_article_cmd(url):
         '',
     ]
     if data.get('image'):
-        md_lines.append(data['image'])
+        md_lines.append(f'![]({data["image"]})')
         md_lines.append('')
     md_lines.append(data['content'])
     md_lines.append('')
@@ -469,10 +472,8 @@ def compile_newsletter(articles_csv, style='简报', title=None, lawyer_comments
             content = data.get('content', '')
             source_name = '央视网'
 
-            # First 2 sentences as summary
-            sentences = re.split(r'[。！？]', content)
-            summary = '。'.join(sentences[:2]) + '。' if len(sentences) > 1 else (sentences[0] + '。' if sentences else '')
-            summary = summary[:300]
+            # Use original brief from fetch data (no truncation)
+            summary = data.get('brief', '') or ''
 
             # Look up main image from raw cache
             image_url = data.get('image', '') or ''
@@ -723,9 +724,23 @@ def main():
 
     elif cmd == 'fetch-article':
         if len(sys.argv) < 3:
-            die("usage: python3 law-news.py fetch-article <url>")
-        url = sys.argv[2]
-        print(fetch_article_cmd(url))
+            die("usage: python3 law-news.py fetch-article <url>\n       python3 law-news.py fetch-article --batch \"url1,url2,url3\"")
+        if sys.argv[2] == '--batch' and len(sys.argv) >= 4:
+            urls = [u.strip() for u in sys.argv[3].split(',') if u.strip()]
+            paths = []
+            for url in urls:
+                try:
+                    p = fetch_article_cmd(url)
+                    paths.append(p)
+                except SystemExit as e:
+                    print(f"⚠️  {url} 抓取失败", file=sys.stderr)
+            if paths:
+                print('\n'.join(paths))
+            else:
+                die("所有文章均抓取失败")
+        else:
+            url = sys.argv[2]
+            print(fetch_article_cmd(url))
 
     elif cmd == 'compile':
         articles_csv = None
