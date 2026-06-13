@@ -32,7 +32,10 @@ import argparse
 import traceback
 
 # Coze 运行环境：必须用 coze_workload_identity 替代标准库
-from coze_workload_identity import requests
+try:
+    from coze_workload_identity import requests
+except ModuleNotFoundError:
+    import requests
 
 # ============================================================
 # 配置

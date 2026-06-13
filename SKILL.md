@@ -79,11 +79,13 @@ cd feishu-lawtools
 | 工具 | 全局依赖 | 用户配置 | 核心能力 | 说明 |
 |------|----------|----------|----------|------|
 | `law-import` | `lark-cli` | — | AI 指令 | URL/文件 → 飞书文档 |
-| `law-news` | `lark-cli`, `python3` | `lawyer-profile.json`（可选） | Python 脚本 | 新闻抓取、排版、发布 |
+| `law-news` | `lark-cli`, `python3`, `requests` | `lawyer-profile.json`（可选） | Python 脚本 | 新闻抓取、排版、发布 |
+| `wechat-draft` | `python3`, `requests` | — | Python 脚本 | HTML → 微信公众号草稿 |
 | `law-highlight` | `lark-cli` | — | AI 指令 | 正文标记 |
 | `law-annotate` | `lark-cli` | — | AI 指令 | AI 批注 |
 | `→ 公众号` | `lark-cli`, `node` | — | 调用 `tools/md-to-wechat` CLI | Markdown/飞书文档 → 公众号 HTML |
 | `docx-skill` | `node` | `docx-profile.json`（可选） | Node.js 脚本 | docx 文档审查/修订（跨 run 匹配、批注、留痕） |
+| `wechat-draft` | `python3`, `requests` | — | Python 脚本 | HTML → 微信公众号草稿 |
 
 > 公众号转换能力由 `tools/md-to-wechat/` 提供（18 主题的 Node.js 转换器，`scripts/cli.js`），非独立工具，各 skill 可直接调用。
 

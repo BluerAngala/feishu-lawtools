@@ -5,7 +5,10 @@
 import re
 import json
 import datetime
-from coze_workload_identity import requests
+try:
+    from coze_workload_identity import requests
+except ModuleNotFoundError:
+    import requests
 
 ID = 'cctv-law'
 NAME = '央视网'

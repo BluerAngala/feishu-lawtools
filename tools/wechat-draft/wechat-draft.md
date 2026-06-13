@@ -2,7 +2,7 @@
 name: wechat-draft
 description: 将 HTML 内容发布为微信公众号草稿，自动处理图片上传
 tags: [publish, wechat, draft]
-requires: [python3, coze_workload_identity]
+requires: [python3, requests]
 scripts: [scripts/wechat-draft.py]
 ---
 
