@@ -387,11 +387,28 @@ def fetch_article_cmd(url):
 
 # ===== compile: 多篇文章汇编 → 最终稿件 .md =====
 
-def compile_newsletter(articles_csv, style='简报', title=None):
+def compile_newsletter(articles_csv, style='简报', title=None, lawyer_comments=None):
     if not articles_csv:
         die("ERROR: --articles is required")
     if not title:
         title = f'法律资讯{style} {today()}'
+
+    # Parse optional lawyer comments JSON: {"article_id": "comment", ...}
+    # Accepts either inline JSON string or @file path
+    comments = {}
+    if lawyer_comments:
+        if lawyer_comments.startswith('@'):
+            file_path = lawyer_comments[1:]
+            try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    comments = json.load(f)
+            except (OSError, json.JSONDecodeError) as e:
+                die(f"ERROR: failed to load --lawyer-comments from {file_path}: {e}")
+        else:
+            try:
+                comments = json.loads(lawyer_comments)
+            except json.JSONDecodeError as e:
+                die(f"ERROR: --lawyer-comments must be valid JSON: {e}")
 
     cache_dir = get_cache_dir()
     exports_dir = os.path.join(cache_dir, 'exports')
@@ -459,6 +476,14 @@ def compile_newsletter(articles_csv, style='简报', title=None):
             lines.extend([
                 summary,
                 '',
+            ])
+            # Optional lawyer insight (1-2 sentences from a legal professional's view)
+            if aid in comments and comments[aid].strip():
+                lines.extend([
+                    f'**律师说**：{comments[aid].strip()}',
+                    '',
+                ])
+            lines.extend([
                 f'> 日期：{date_text}',
                 f'> 来源：{source_name}',
                 f'> 原文链接：[{article_url}]({article_url})',
@@ -680,6 +705,7 @@ def main():
         articles_csv = None
         style = '简报'
         title = None
+        lawyer_comments = None
         i = 2
         while i < len(sys.argv):
             if sys.argv[i] == '--articles' and i + 1 < len(sys.argv):
@@ -691,9 +717,12 @@ def main():
             elif sys.argv[i] == '--title' and i + 1 < len(sys.argv):
                 title = sys.argv[i + 1]
                 i += 2
+            elif sys.argv[i] == '--lawyer-comments' and i + 1 < len(sys.argv):
+                lawyer_comments = sys.argv[i + 1]
+                i += 2
             else:
                 i += 1
-        print(compile_newsletter(articles_csv, style, title))
+        print(compile_newsletter(articles_csv, style, title, lawyer_comments))
 
     elif cmd == 'publish':
         if len(sys.argv) < 3:
