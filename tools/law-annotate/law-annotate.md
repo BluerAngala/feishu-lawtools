@@ -46,7 +46,25 @@ scripts: []
 lark-cli docs +fetch --api-version v2 --doc <token> --detail with-ids --as user --format json
 ```
 
-从返回的 XML 中提取所有 `<p id="article-X">` 节点的 `id` 和文本内容。
+从返回的 XML 中提取以下信息：
+
+- **`block_id`**（如 `T1234567890`）：飞书系统分配的 block 唯一标识，位于 `<block block_id="...">` 属性中
+- **自定义 `id`**（如 `article-1`）：位于 `<p id="article-1">` 的自定义属性
+
+返回的 XML 结构大致如下（简化示意）：
+
+```xml
+<document document_id="xxx">
+  <block block_id="T1234567890">
+    <p id="article-1">第一条 为了保护民事主体的合法权益……</p>
+  </block>
+  <block block_id="T1234567891">
+    <p id="article-2">第二条 民法调整平等主体的自然人……</p>
+  </block>
+</document>
+```
+
+**关键区别**：`block_id`（`T...`）是 `drive +add-comment --block-id` 需要的锚点；自定义 `id`（`article-1`）仅用于 AI 识别哪条是第几条，不能直接用于批注。
 
 ### ② AI 生成解读
 
@@ -69,7 +87,7 @@ lark-cli drive +add-comment \
 ```
 
 > **content 格式**：必须是 JSON 数组，元素格式为 `{"type":"text","text":"内容"}`
-> **block-id**：即 XML 中 `<p id="article-1">` 的 `id` 值
+> **block-id**：填写从 `docs +fetch --detail with-ids` 返回的 `<block block_id="T...">` 中的值（如 `T1234567890`），**不是** `<p id="article-1">` 的自定义 `id`
 
 ---
 

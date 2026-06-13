@@ -346,7 +346,7 @@ def fetch_article_cmd(url):
 
     data = fetch_article_content(url)
 
-    # Look up main image from cached raw data
+    # Look up metadata (image, keywords) from cached raw data
     raw_dir = os.path.join(get_cache_dir(), 'raw', 'cctv-law')
     if os.path.isdir(raw_dir):
         for fn in sorted(os.listdir(raw_dir), reverse=True):
@@ -355,11 +355,15 @@ def fetch_article_cmd(url):
                     raw_data = json.load(f)
                 for item in raw_data.get('items', []):
                     if item.get('url', '').rstrip('/') == url.rstrip('/'):
-                        data['image'] = item.get('image', '') or ''
+                        if not data.get('image'):
+                            data['image'] = item.get('image', '') or ''
+                        if not data.get('keywords'):
+                            data['keywords'] = item.get('keywords', [])
                         break
             if data.get('image'):
                 break
     data.setdefault('image', '')
+    data.setdefault('keywords', [])
 
     # Save JSON
     with open(json_file, 'w', encoding='utf-8') as f:
@@ -630,10 +634,12 @@ def publish_doc(filepath, title='法律资讯', wiki=None):
         die(f"create doc failed: {result}")
 
     if wiki and doc_id:
-        subprocess.run(
+        proc = subprocess.run(
             ['lark-cli', 'wiki', '+move', '--doc', doc_id, '--space', wiki, '--as', 'user'],
-            capture_output=True
+            capture_output=True, text=True
         )
+        if proc.returncode != 0:
+            print(f"⚠️  文档已创建但移入知识库失败: {proc.stderr.strip() or proc.stdout.strip()}", file=sys.stderr)
 
 
 # ===== list-cache =====

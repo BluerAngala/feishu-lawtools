@@ -120,14 +120,20 @@ def audit_tool(tool_name):
             issues.append(warn(f'frontmatter scripts 应为数组: {scripts}'))
 
     # === 2. 首次使用章节检查 ===
-    has_first_use = '首次使用' in content or '首次运行' in content
-    if not has_first_use:
-        issues.append(warn('缺少「首次使用」章节（如果有用户配置则必须有）'))
+    # 只在有用户配置（.example.json）或有脚本的工具中检查
+    has_example = any(f.endswith('-profile.example.json') for f in os.listdir(tool_dir)) if os.path.isdir(tool_dir) else False
+    has_scripts = bool(fm and isinstance(fm.get('scripts'), list) and fm.get('scripts')) if fm else False
+    if (has_example or has_scripts):
+        has_first_use = '首次使用' in content or '首次运行' in content
+        if not has_first_use:
+            issues.append(warn('缺少「首次使用」章节'))
 
     # === 3. 数据结构/字段表检查 ===
-    has_field_table = '字段' in content and '|' in content
-    if not has_field_table:
-        issues.append(warn('缺少「数据字段」表'))
+    # 只在有脚本或用户配置的工具中检查（有数据契约的工具应列出字段表）
+    if (has_scripts or has_example):
+        has_field_table = '字段' in content and '|' in content
+        if not has_field_table:
+            issues.append(warn('缺少「数据字段」表（有脚本/配置的工具建议列出）'))
 
     # === 4. 脚本存在性 ===
     if fm and isinstance(fm.get('scripts'), list) and fm.get('scripts'):
@@ -141,13 +147,12 @@ def audit_tool(tool_name):
                     issues.append(warn(f'脚本扩展名非 .py/.sh: {script_path}'))
 
     # === 5. cache 目录 ===
-    cache_dir = os.path.join(tool_dir, 'cache')
-    # cache 不一定存在（首次未运行），但 .gitignore 应排除
-    if os.path.isfile(GITIGNORE):
+    # 只有有脚本的工具才需要 cache，才需要检查 gitignore
+    if has_scripts and os.path.isfile(GITIGNORE):
         with open(GITIGNORE, 'r') as f:
             gi = f.read()
         if 'tools/*/cache/' not in gi:
-            issues.append(warn('.gitignore 未排除 tools/*/cache/'))
+            issues.append(warn('.gitignore 未排除 tools/*/cache/（有脚本的工具需要缓存）'))
 
     # === 6. 用户配置文件配对 ===
     example_files = [f for f in os.listdir(tool_dir) if f.endswith('-profile.example.json')]
@@ -185,7 +190,7 @@ def audit_gitignore():
         gi = f.read()
     required = [
         ('cache 目录', 'tools/*/cache/'),
-        ('个人 profile 配置', 'tools/*/lawyer-profile.json'),
+        ('个人 profile 配置', 'tools/*/*-profile.json'),
     ]
     for name, pattern in required:
         if pattern not in gi:
