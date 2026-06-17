@@ -3,4 +3,3 @@ node_modules/
 *.log
 tools/*/cache/
 tools/*/*-profile.json
-tools/*/*.config.json

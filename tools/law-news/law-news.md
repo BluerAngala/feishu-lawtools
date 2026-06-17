@@ -2,7 +2,7 @@
 name: law-news
 description: 获取法律资讯，整理为文章
 tags: [fetch, transform]
-requires: [lark-cli, python3, requests]
+requires: [lark-cli, python3]
 scripts: [scripts/law-news.py]
 ---
 

@@ -27,10 +27,7 @@ import json
 import re
 import datetime
 import html as htmlmod
-try:
-    from coze_workload_identity import requests
-except ModuleNotFoundError:
-    import requests
+from coze_workload_identity import requests
 import subprocess
 import importlib
 import importlib.util

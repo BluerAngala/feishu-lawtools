@@ -44,8 +44,6 @@ lark-cli auth status
 | law-highlight | 正文加粗/标色 | `docs +update str_replace` 或 `PATCH blocks/{id}` |
 | law-annotate | 逐条 AI 批注 | `drive +add-comment` |
 | → 公众号 | Markdown/飞书文档 → 公众号 HTML | `node tools/md-to-wechat/scripts/cli.js converter convert` |
-| docx-skill | docx 文档审查/修订 | `node scripts/docx.mjs apply` |
-| wechat-draft | HTML → 微信公众号草稿 | `python3 scripts/wechat-draft.py publish-draft` |
 
 ## 维护
 
@@ -177,28 +175,6 @@ python3 --version
 
 > 所有 `.py` 脚本仅使用 `python3` 标准库，无第三方依赖。无需 `pip install`，无需 virtualenv。
 > 若未来确需第三方库，必须在 `requires` 中声明并在 skill 文档中注明安装方式。
-
-### Coze 环境兼容
-
-本工具箱部分 Python 脚本适配了 **Coze（扣子）技能商店**，使用 `coze_workload_identity` 模块替代标准 `requests` 库处理 HTTP 请求。
-
-**每次 import 都必须加 try/except fallback**，确保 Coze 和本地环境都能跑：
-
-```python
-try:
-    from coze_workload_identity import requests
-except ModuleNotFoundError:
-    import requests
-```
-
-> 规则：所有 Python 脚本中涉及 `coze_workload_identity` 的 import **不得使用无条件导入**，必须带 `try/except ModuleNotFoundError` 回退到标准库或 `pip` 包。这是硬性红线。
-
-Coze 依赖声明在 frontmatter `requires` 中注明 `coze_workload_identity`，本地回退依赖另行注明（如 `requests`）：
-
-```yaml
-# 示例
-requires: [python3, coze_workload_identity, requests]
-```
 
 ### 共享库
 
