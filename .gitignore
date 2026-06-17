@@ -3,3 +3,4 @@ node_modules/
 *.log
 tools/*/cache/
 tools/*/*-profile.json
+__pycache__/
