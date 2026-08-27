@@ -45,7 +45,7 @@
 
 ```bash
 # 从 GitHub 安装（推荐）
-pi install git:github.com/BluerAngala/feishu-lawtools
+pi install git:github.com/lawyerch-law/feishu-lawtools
 
 # 或从 npm 安装
 pi install npm:@bluerangala/feishu-lawtools
@@ -55,14 +55,14 @@ pi install npm:@bluerangala/feishu-lawtools
 
 ```bash
 mkdir -p ~/.claude/skills
-git clone https://github.com/BluerAngala/feishu-lawtools ~/.claude/skills/feishu-lawtools
+git clone https://github.com/lawyerch-law/feishu-lawtools ~/.claude/skills/feishu-lawtools
 ```
 
 ### Codex
 
 ```bash
 mkdir -p ~/.codex/skills
-git clone https://github.com/BluerAngala/feishu-lawtools ~/.codex/skills/feishu-lawtools
+git clone https://github.com/lawyerch-law/feishu-lawtools ~/.codex/skills/feishu-lawtools
 ```
 
 > 也可在 Codex 中通过 `$skill-installer` 或 `AGENTS.md` 引用安装。
@@ -71,7 +71,7 @@ git clone https://github.com/BluerAngala/feishu-lawtools ~/.codex/skills/feishu-
 
 ```bash
 mkdir -p ~/.agents/skills
-git clone https://github.com/BluerAngala/feishu-lawtools ~/.agents/skills/feishu-lawtools
+git clone https://github.com/lawyerch-law/feishu-lawtools ~/.agents/skills/feishu-lawtools
 ```
 
 > 或参考你的 agent 的文档，将本 skill 目录添加到对应的配置路径中。
@@ -79,7 +79,7 @@ git clone https://github.com/BluerAngala/feishu-lawtools ~/.agents/skills/feishu
 ### 手动（通用）
 
 ```bash
-git clone https://github.com/BluerAngala/feishu-lawtools.git
+git clone https://github.com/lawyerch-law/feishu-lawtools.git
 cd feishu-lawtools
 # 在你的 agent 配置中指向这个目录
 ```
